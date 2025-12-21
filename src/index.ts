@@ -1,33 +1,30 @@
-import { Client, Events, GatewayIntentBits } from 'discord.js';
+import 'dotenv/config';
+import { AppContainer } from '@/core/app-container';
 import { ConfigService } from '@/infrastructure/config/config.service';
-import {
-  createLogger,
-  Logger,
-} from '@/infrastructure/logging/logger';
+import { createLogger } from '@/infrastructure/logging/logger';
 import { initializeErrorHandlers } from '@/infrastructure/logging/errorHandler';
+import { DiscordClientService } from '@/discord/core/discord-client.service';
 
-const configService = new ConfigService();
-const config = configService.get();
-const logger: Logger = createLogger(config.logLevel);
-initializeErrorHandlers(logger);
+async function bootstrap() {
+  const container = AppContainer.getInstance();
 
-async function start() {
-  logger.info('Herwa is starting...');
+  const configService = new ConfigService();
+  container.register(ConfigService, configService);
 
-  const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
-  });
-
-  client.once(Events.ClientReady, (readyClient) => {
-    logger.info(`Ready! Logged in as ${readyClient.user.tag}`);
-  });
-
+  const rootLogger = createLogger(configService.get().logLevel);
+  initializeErrorHandlers(rootLogger);
+  
+  rootLogger.info('Herwa is starting...');
+  
+  const discordClientService = new DiscordClientService();
+  container.register(DiscordClientService, discordClientService);
+  
   try {
-    await client.login(config.discordToken);
+    await discordClientService.start();
   } catch (error) {
-    logger.fatal({ err: error }, 'Failed to login to Discord');
+    rootLogger.fatal({ err: error }, 'Failed during application bootstrap');
     process.exit(1);
   }
 }
 
-start();
+bootstrap();
