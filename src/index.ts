@@ -5,10 +5,9 @@ import { ConfigService } from '@/infrastructure/config/config.service';
 import { createLogger } from '@/infrastructure/logging/logger';
 import { initializeErrorHandlers } from '@/infrastructure/logging/errorHandler';
 import { DiscordClientService } from '@/discord/core/discord-client.service';
-import { CommandRegistryService } from '@/discord/commands/command-registry.service';
 import { CommandPublishingService } from '@/discord/core/command-publishing.service';
 import { InteractionHandlingService } from '@/discord/core/interaction-handling.service';
-import { UtilityCommands } from '@/discord/commands/modules/utility/utility.registrar';
+import { composeApplication } from '@/core/app.composer';
 
 async function bootstrap() {
   const container = AppContainer.getInstance();
@@ -20,14 +19,8 @@ async function bootstrap() {
   
   rootLogger.info('Herwa is starting...');
   
-  container.register(DiscordClientService, new DiscordClientService());
-  container.register(CommandRegistryService, new CommandRegistryService());
-  container.register(CommandPublishingService, new CommandPublishingService());
-  container.register(InteractionHandlingService, new InteractionHandlingService());
+  composeApplication(container);
 
-  const commandRegistry = container.get(CommandRegistryService);
-  commandRegistry.register(UtilityCommands);
-  
   const interactionHandler = container.get(InteractionHandlingService);
   interactionHandler.start();
 
