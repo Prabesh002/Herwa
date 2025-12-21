@@ -7,6 +7,7 @@ import { initializeErrorHandlers } from '@/infrastructure/logging/errorHandler';
 import { DiscordClientService } from '@/discord/core/discord-client.service';
 import { CommandPublishingService } from '@/discord/core/command-publishing.service';
 import { InteractionHandlingService } from '@/discord/core/interaction-handling.service';
+import { EventHandlingService } from '@/discord/core/event-handling.service';
 import { composeApplication } from '@/core/app.composer';
 
 async function bootstrap() {
@@ -23,6 +24,9 @@ async function bootstrap() {
 
   const interactionHandler = container.get(InteractionHandlingService);
   interactionHandler.start();
+
+  const eventHandler = container.get(EventHandlingService);
+  eventHandler.start();
 
   const discordClient = container.get(DiscordClientService);
   const commandPublisher = container.get(CommandPublishingService);
