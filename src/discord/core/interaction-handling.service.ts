@@ -1,4 +1,4 @@
-import { Events, Interaction } from 'discord.js';
+import { Events, Interaction, MessageFlags } from 'discord.js';
 import { AppContainer } from '@/core/app-container';
 import { DiscordClientService } from '@/discord/core/discord-client.service';
 import { CommandRegistryService } from '@/discord/commands/command-registry.service';
@@ -32,7 +32,7 @@ export class InteractionHandlingService {
       this.logger.warn(`No command matching "${interaction.commandName}" was found.`);
       await interaction.reply({
         content: 'Unknown command.',
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
       });
       return;
     }
@@ -42,9 +42,9 @@ export class InteractionHandlingService {
     } catch (error) {
       this.logger.error({ err: error, command: interaction.commandName }, 'Error executing command');
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+        await interaction.followUp({ content: 'There was an error while executing this command!', flags: [MessageFlags.Ephemeral] });
       } else {
-        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        await interaction.reply({ content: 'There was an error while executing this command!', flags: [MessageFlags.Ephemeral] });
       }
     }
   }

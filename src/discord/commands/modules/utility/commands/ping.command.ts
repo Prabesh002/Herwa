@@ -7,7 +7,8 @@ export class PingCommand implements ICommand {
     .setDescription('Replies with Pong!');
 
   public async execute(interaction: CommandInteraction): Promise<void> {
-    const sent = await interaction.reply({ content: 'Pinging...'});
+    await interaction.reply({ content: 'Pinging...' });
+    const sent = await interaction.fetchReply();
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
     await interaction.editReply(`Pong! Roundtrip latency: ${latency}ms.`);
   }

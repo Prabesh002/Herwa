@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { Events } from 'discord.js';
 import { AppContainer } from '@/core/app-container';
 import { ConfigService } from '@/infrastructure/config/config.service';
 import { createLogger } from '@/infrastructure/logging/logger';
@@ -33,7 +34,7 @@ async function bootstrap() {
   const discordClient = container.get(DiscordClientService);
   const commandPublisher = container.get(CommandPublishingService);
 
-  discordClient.getClient().once('ready', async () => {
+  discordClient.getClient().once(Events.ClientReady, async () => {
     await commandPublisher.publish();
   });
 
