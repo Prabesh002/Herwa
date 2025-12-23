@@ -8,6 +8,7 @@ import { EventHandlingService } from '@/discord/core/event-handling.service';
 import { VoiceSessionManager } from '@/discord/voice/voice-session-manager.service';
 import { loadCommands } from '@/discord/commands/command.loader';
 import { loadEvents } from '@/discord/events/event.loader';
+import { StatsProvider } from './providers/stats.provider';
 
 export function loadDiscordModule(container: AppContainer): void {
   container.register(DiscordClientService, new DiscordClientService());
@@ -19,6 +20,7 @@ export function loadDiscordModule(container: AppContainer): void {
   container.register(EventRegistryService, new EventRegistryService());
   container.register(EventHandlingService, new EventHandlingService());
   container.register(VoiceSessionManager, new VoiceSessionManager());
+  container.register(StatsProvider, new StatsProvider());
 
   const commandRegistry = container.get(CommandRegistryService);
   loadCommands(commandRegistry);
