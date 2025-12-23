@@ -25,6 +25,7 @@ export class ConfigService {
       discordClientId,
       discordClientSecret,
       logLevel,
+      databaseUrl: process.env.DATABASE_URL || '',
     };
   }
 

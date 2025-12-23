@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "db:generate": "drizzle-kit generate:pg",
+    "db:migrate": "node -r esbuild-register scripts/db-migrate.ts"
   },
   "keywords": [
     "discord bot",
@@ -16,6 +18,8 @@
   "author": "Nellow",
   "devDependencies": {
     "@types/node": "^20.14.2",
+    "@types/pg": "^8.16.0",
+    "drizzle-kit": "^0.31.8",
     "nodemon": "^3.1.3",
     "pino-pretty": "^11.2.1",
     "ts-node": "^10.9.2",
@@ -26,6 +30,8 @@
     "@discordjs/rest": "^2.6.0",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.16.3",
     "pino": "^9.2.0"
   }
 }

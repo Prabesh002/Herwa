@@ -3,4 +3,5 @@ export interface AppConfig {
   discordClientId: string;
   discordClientSecret: string;
   logLevel: string;
+  databaseUrl: string;
 }
