@@ -1,9 +1,4 @@
-import * as messageEventsSchema from './message-events.schema';
-import * as memberLifecycleSchema from './member-lifecycle.schema';
-import * as voiceSessionsSchema from './voice-sessions.schema';
-
-export const schema = {
-  ...messageEventsSchema,
-  ...memberLifecycleSchema,
-  ...voiceSessionsSchema,
-};
+export * from './enums.schema';
+export * from './message-events.schema';
+export * from './member-lifecycle.schema';
+export * from './voice-sessions.schema';

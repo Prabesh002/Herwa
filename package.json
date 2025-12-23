@@ -7,8 +7,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon",
-    "db:generate": "drizzle-kit generate:pg",
-    "db:migrate": "node -r esbuild-register scripts/db-migrate.ts"
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts"
   },
   "keywords": [
     "discord bot",

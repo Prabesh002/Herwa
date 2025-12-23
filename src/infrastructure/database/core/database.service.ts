@@ -2,7 +2,7 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { AppContainer } from '@/core/app-container';
 import { ConfigService } from '@/infrastructure/config/config.service';
-import { schema } from '@/infrastructure/database/schema';
+import * as schema from '@/infrastructure/database/schema';
 
 export class DatabaseService {
   private readonly db: NodePgDatabase<typeof schema>;
