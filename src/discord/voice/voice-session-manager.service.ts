@@ -1,9 +1,8 @@
 import { VoiceState } from 'discord.js';
 import { AppContainer } from '@/core/app-container';
-import { DatabaseService } from '@/infrastructure/database/core/database.service';
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
-
-import { voiceSessions } from '@/infrastructure/database/schema/voice-sessions.schema';
+import { VoicePersistenceService } from '@/infrastructure/database/services/voice-persistence.service';
+import type { voiceSessions } from '@/infrastructure/database/schema/voice-sessions.schema';
 
 type NewVoiceSession = typeof voiceSessions.$inferInsert;
 
@@ -15,11 +14,11 @@ type ActiveSession = {
 export class VoiceSessionManager {
   private readonly activeSessions = new Map<string, ActiveSession>();
   private readonly logger: Logger;
-  private readonly database: DatabaseService;
+  private readonly persistence: VoicePersistenceService;
 
   constructor() {
     this.logger = createLogger('info').child({ service: 'VoiceSessionManager' });
-    this.database = AppContainer.getInstance().get(DatabaseService);
+    this.persistence = AppContainer.getInstance().get(VoicePersistenceService);
   }
 
   public handleStateUpdate(oldState: VoiceState, newState: VoiceState): void {
@@ -83,8 +82,7 @@ export class VoiceSessionManager {
         durationSeconds: durationSeconds,
       };
 
-      const db = this.database.getDb();
-      await db.insert(voiceSessions).values(newSession);
+      await this.persistence.recordVoiceSession(newSession);
 
       this.logger.debug({ sessionKey, durationSeconds }, 'Voice session ended and recorded.');
     } catch (error) {

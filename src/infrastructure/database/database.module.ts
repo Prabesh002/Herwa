@@ -5,6 +5,7 @@ import { MemberLifecycleRepository } from './repositories/member-lifecycle.repos
 import { VoiceRepository } from './repositories/voice.repository';
 import { MessagePersistenceService } from './services/message-persistence.service';
 import { MemberPersistenceService } from './services/member-persistence.service';
+import { VoicePersistenceService } from './services/voice-persistence.service';
 
 export function loadDatabaseModule(container: AppContainer): void {
   container.register(DatabaseService, new DatabaseService());
@@ -15,4 +16,5 @@ export function loadDatabaseModule(container: AppContainer): void {
 
   container.register(MessagePersistenceService, new MessagePersistenceService());
   container.register(MemberPersistenceService, new MemberPersistenceService());
+  container.register(VoicePersistenceService, new VoicePersistenceService());
 }
