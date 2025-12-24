@@ -8,24 +8,28 @@ export class ConfigService {
     const discordToken = process.env.DISCORD_TOKEN;
     const discordClientId = process.env.DISCORD_CLIENT_ID;
     const discordClientSecret = process.env.DISCORD_CLIENT_SECRET;
+    if (!discordToken || !discordClientId || !discordClientSecret) {
+      throw new Error('Missing one or more required Discord environment variables.');
+    }
+
     const logLevel = process.env.LOG_LEVEL || 'info';
 
-    if (!discordToken) {
-      throw new Error('DISCORD_TOKEN environment variable is not set.');
+    const dbHost = process.env.DB_HOST;
+    const dbPort = process.env.DB_PORT;
+    const dbUser = process.env.DB_USER;
+    const dbPassword = process.env.DB_PASSWORD;
+    const dbName = process.env.DB_NAME;
+    if (!dbHost || !dbPort || !dbUser || !dbPassword || !dbName) {
+      throw new Error('Missing one or more required Database environment variables.');
     }
-    if (!discordClientId) {
-      throw new Error('DISCORD_CLIENT_ID environment variable is not set.');
-    }
-    if (!discordClientSecret) {
-      throw new Error('DISCORD_CLIENT_SECRET environment variable is not set.');
-    }
+    const databaseUrl = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
 
     this.config = {
       discordToken,
       discordClientId,
       discordClientSecret,
       logLevel,
-      databaseUrl: process.env.DATABASE_URL || '',
+      databaseUrl,
     };
   }
 
