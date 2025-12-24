@@ -1,0 +1,16 @@
+.git
+.DS_Store
+Thumbs.db
+
+node_modules/
+
+logs/
+dist/
+.tsbuildinfo
+
+.env
+.env.*
+!/.env.example
+
+Dockerfile*
+docker-compose.yml

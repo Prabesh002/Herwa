@@ -1,0 +1,30 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN npm i esbuild
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY . .
+RUN npx esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js --minify
+
+FROM node:20-alpine AS runner
+
+RUN apk add --no-cache postgresql-client
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist/bundle.js ./dist/
+COPY entrypoint.sh .
+COPY drizzle.config.ts .
+COPY --from=builder /app/migrations ./migrations
+
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT [ "./entrypoint.sh" ]
+
+CMD [ "node", "dist/bundle.js" ]
