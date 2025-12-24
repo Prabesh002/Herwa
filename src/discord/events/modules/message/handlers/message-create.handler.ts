@@ -2,36 +2,32 @@ import { Events, Message } from 'discord.js';
 import { IEventHandler } from '@/discord/events/core/event.contract';
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
 import { AppContainer } from '@/core/app-container';
-import { DatabaseService } from '@/infrastructure/database/core/database.service';
-import { messageEvents } from '@/infrastructure/database/schema/message-events.schema';
-import { MessageKind } from '@/infrastructure/database/schema/enums.schema';
+import { MessagePersistenceService } from '@/infrastructure/database/services/message-persistence.service';
+import { MessageKind } from '@/infrastructure/database/schema';
 
 export class MessageCreateHandler implements IEventHandler<Events.MessageCreate> {
   public readonly eventName = Events.MessageCreate;
   private readonly logger: Logger;
-  private readonly databaseService: DatabaseService;
+  private readonly persistence: MessagePersistenceService;
 
   constructor() {
     this.logger = createLogger('info').child({ handler: 'MessageCreate' });
-    this.databaseService = AppContainer.getInstance().get(DatabaseService);
+    this.persistence = AppContainer.getInstance().get(MessagePersistenceService);
   }
 
   public async execute(message: Message): Promise<void> {
     if (!message.guildId) return; // Ignore DMs
 
-    const db = this.databaseService.getDb();
-    const messageKind: MessageKind = this.getMessageKind(message);
-    
     try {
-      await db.insert(messageEvents).values({
+      await this.persistence.recordMessageCreate({
         guildId: message.guildId,
         channelId: message.channel.id,
         userId: message.author.id,
         isBot: message.author.bot,
-        messageKind: messageKind,
+        messageKind: this.getMessageKind(message),
       });
     } catch (error) {
-      this.logger.error({ err: error }, 'Failed to save message event to database.');
+      this.logger.error({ err: error }, 'Failed to process message create event.');
     }
   }
 
