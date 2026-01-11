@@ -13,4 +13,5 @@ dist/
 !/.env.example
 
 Dockerfile*
-docker-compose.yml
+docker-compose*
+nodemon.json
