@@ -24,12 +24,20 @@ export class ConfigService {
     }
     const databaseUrl = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
 
+    const chHost = process.env.CLICKHOUSE_HOST;
+    const chPortHttp = process.env.CLICKHOUSE_PORT_HTTP;
+    if (!chHost || !chPortHttp) {
+      throw new Error('Missing one or more required ClickHouse environment variables.');
+    }
+    const clickhouseUrl = `http://${chHost}:${chPortHttp}`;
+
     this.config = {
       discordToken,
       discordClientId,
       discordClientSecret,
       logLevel,
       databaseUrl,
+      clickhouseUrl,
     };
   }
 
