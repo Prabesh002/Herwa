@@ -8,8 +8,11 @@ until PGPASSWORD=$DB_PASSWORD pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USE
 done
 echo "PostgreSQL is ready."
 
-echo "Applying database migrations..."
-./node_modules/.bin/drizzle-kit migrate --config=drizzle.config.ts
+echo "Applying PostgreSQL migrations..."
+npm run db:migrate
+
+echo "Applying ClickHouse migrations..."
+npm run analytics:migrate
 
 echo "Starting the application..."
 exec "$@"

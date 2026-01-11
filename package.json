@@ -10,6 +10,7 @@
     "dev": "nodemon",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "analytics:migrate": "ts-node -r tsconfig-paths/register src/infrastructure/analytics/migrations/runner.ts",
     "docker:dev": "docker-compose -f docker-compose.dev.yml up --build --remove-orphans",
     "docker:dev:down": "docker-compose -f docker-compose.dev.yml down",
     "docker:prod": "docker-compose -f docker-compose.yml up --build --remove-orphans",
