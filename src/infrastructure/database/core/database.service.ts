@@ -12,6 +12,7 @@ export class DatabaseService {
     const config = AppContainer.getInstance().get(ConfigService).get();
     this.pool = new Pool({
       connectionString: config.databaseUrl,
+      ssl: process.env.DB_SSL === 'true',
     });
     this.db = drizzle(this.pool, { schema });
   }
