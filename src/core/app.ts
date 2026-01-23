@@ -8,6 +8,7 @@ import { CommandPublishingService } from '@/discord/core/command-publishing.serv
 import { InteractionHandlingService } from '@/discord/core/interaction-handling.service';
 import { EventHandlingService } from '@/discord/core/event-handling.service';
 import { composeApplication } from '@/core/app.composer';
+import { ClickHouseService } from '@/infrastructure/analytics/core/clickhouse.service';
 
 export class App {
   private readonly container: AppContainer;
@@ -24,8 +25,11 @@ export class App {
 
   public async start(): Promise<void> {
     this.logger.info('Herwa is starting...');
-    
+
     composeApplication(this.container);
+
+    const analyticsService = this.container.get(ClickHouseService);
+    await analyticsService.connect();
 
     const interactionHandler = this.container.get(InteractionHandlingService);
     interactionHandler.start();

@@ -10,6 +10,8 @@
     "dev": "nodemon",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "analytics:migrate": "ts-node -r tsconfig-paths/register src/infrastructure/analytics/migrations/runner.ts",
+    "analytics:migrate:prod": "node -r tsconfig-paths/register dist/infrastructure/analytics/migrations/runner.js",
     "docker:dev": "docker-compose -f docker-compose.dev.yml up --build --remove-orphans",
     "docker:dev:down": "docker-compose -f docker-compose.dev.yml down",
     "docker:prod": "docker-compose -f docker-compose.yml up --build --remove-orphans",
@@ -31,6 +33,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@clickhouse/client": "^1.16.0",
     "@discordjs/rest": "^2.6.0",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",

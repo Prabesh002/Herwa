@@ -4,4 +4,5 @@ export interface AppConfig {
   discordClientSecret: string;
   logLevel: string;
   databaseUrl: string;
+  clickhouseUrl: string;
 }

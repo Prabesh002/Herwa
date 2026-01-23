@@ -8,5 +8,8 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY . .
+COPY entrypoint-dev.sh .
+RUN chmod +x ./entrypoint-dev.sh
 
+ENTRYPOINT ["./entrypoint-dev.sh"]
 CMD ["npm", "run", "dev"]

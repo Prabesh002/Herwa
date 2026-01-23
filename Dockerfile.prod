@@ -16,6 +16,7 @@ RUN npm ci --ignore-scripts
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/migrations ./migrations
+COPY --from=build /app/migrations-ch ./migrations-ch
 COPY --from=build /app/drizzle.config.ts .
 COPY --from=build /app/tsconfig.json .
 COPY entrypoint.sh .
