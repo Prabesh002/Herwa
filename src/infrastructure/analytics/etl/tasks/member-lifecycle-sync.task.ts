@@ -80,7 +80,7 @@ export class MemberLifecycleSyncTask {
       guild_id: event.guildId,
       user_id: event.userId,
       event_type: event.eventType,
-      created_at: event.createdAt.toISOString().replace('T', ' ').replace('Z', ''),
+      created_at: event.createdAt.toISOString().replace('T', ' ').substring(0, 19),
     }));
   }
 

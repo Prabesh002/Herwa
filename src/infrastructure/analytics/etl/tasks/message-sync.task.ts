@@ -80,7 +80,7 @@ export class MessageSyncTask {
       guild_id: msg.guildId,
       channel_id: msg.channelId,
       user_id: msg.userId,
-      created_at: msg.createdAt.toISOString().replace('T', ' ').replace('Z', ''),
+      created_at: msg.createdAt.toISOString().replace('T', ' ').substring(0, 19),
       message_kind: msg.messageKind,
       is_bot: msg.isBot ? 1 : 0,
     }));

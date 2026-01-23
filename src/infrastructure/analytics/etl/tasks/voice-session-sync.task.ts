@@ -80,8 +80,8 @@ export class VoiceSessionSyncTask {
       guild_id: session.guildId,
       channel_id: session.channelId,
       user_id: session.userId,
-      joined_at: session.joinedAt.toISOString().replace('T', ' ').replace('Z', ''),
-      left_at: session.leftAt!.toISOString().replace('T', ' ').replace('Z', ''),
+      joined_at: session.joinedAt.toISOString().replace('T', ' ').substring(0, 19),
+      left_at: session.leftAt!.toISOString().replace('T', ' ').substring(0, 19),
       duration_seconds: session.durationSeconds!,
     }));
   }
