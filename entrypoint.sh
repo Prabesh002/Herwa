@@ -12,7 +12,7 @@ echo "Applying PostgreSQL migrations..."
 npm run db:migrate
 
 echo "Applying ClickHouse migrations..."
-npm run analytics:migrate
+npm run analytics:migrate:prod
 
 echo "Starting the application..."
 exec "$@"
