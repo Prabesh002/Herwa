@@ -48,6 +48,8 @@ services:
     container_name: herwa-etl-prod
     restart: always
     env_file: .env
+    environment:
+      - NODE_ENV=production
     depends_on:
       - db
       - analytics_db
