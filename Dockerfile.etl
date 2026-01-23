@@ -1,0 +1,31 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Install cron daemon provided by busybox
+RUN apk add --no-cache busybox-suid
+
+# Use the same dependency and build stages from Dockerfile.prod
+# to leverage Docker's build cache and avoid duplication.
+FROM base AS deps
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+FROM deps AS build
+COPY . .
+RUN npm run build --ignore-scripts
+
+# Final, minimal runner stage for the ETL service
+FROM base AS runner
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json .
+COPY --from=build /app/tsconfig.json .
+COPY crontab .
+
+# Copy the crontab file to the system location where crond reads from
+RUN mv ./crontab /etc/crontabs/root
+
+USER node
+
+# Command to start the cron daemon in the foreground
+CMD ["crond", "-f", "-l", "8"]

@@ -1,0 +1,1 @@
+*/5 * * * * npm run etl:run:prod >> /var/log/cron.log 2>&1
