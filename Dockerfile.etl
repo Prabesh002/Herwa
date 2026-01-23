@@ -16,16 +16,14 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json .
 COPY --from=build /app/tsconfig.json .
 
-# Copy the ETL runner script, entrypoint, and crontab
-COPY run-etl.sh /app/run-etl.sh
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-COPY crontab /var/spool/cron/crontabs/root
+# Copy and create the ETL script inline to avoid line ending issues
+RUN echo '#!/bin/sh' > /app/run-etl.sh && \
+    echo 'cd /app' >> /app/run-etl.sh && \
+    echo 'npm run etl:run:prod 2>&1' >> /app/run-etl.sh && \
+    chmod +x /app/run-etl.sh
 
-# Make scripts executable and set proper crontab permissions
-RUN chmod +x /app/run-etl.sh && \
-    chmod +x /docker-entrypoint.sh && \
-    chmod 0600 /var/spool/cron/crontabs/root && \
-    touch /app/.env.sh && chmod +x /app/.env.sh
+# Create crontab inline
+RUN echo '* * * * * /app/run-etl.sh' > /var/spool/cron/crontabs/root && \
+    chmod 0600 /var/spool/cron/crontabs/root
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["crond", "-f", "-l", "2"]
