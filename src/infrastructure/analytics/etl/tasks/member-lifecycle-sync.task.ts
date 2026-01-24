@@ -19,7 +19,7 @@ export class MemberLifecycleSyncTask {
 
     try {
       const highWatermark = await this.getHighWatermark();
-      this.logger.info({ highWatermark }, 'Retrieved high-watermark from ClickHouse');
+      this.logger.info({ highWatermark: highWatermark.toISOString() }, 'Retrieved high-watermark from ClickHouse');
 
       const newEvents = await this.extractNewEvents(highWatermark);
 
@@ -57,15 +57,14 @@ export class MemberLifecycleSyncTask {
     return new Date(0);
   }
 
-  private async extractNewEvents(
-    since: Date,
-  ): Promise<typeof memberLifecycleEvents.$inferSelect[]> {
+  private async extractNewEvents(since: Date): Promise<typeof memberLifecycleEvents.$inferSelect[]> {
     const db = this.databaseService.getDb();
+    const sinceWithBuffer = new Date(since.getTime() + 1);
 
     return await db
       .select()
       .from(memberLifecycleEvents)
-      .where(gt(memberLifecycleEvents.createdAt, since));
+      .where(gt(memberLifecycleEvents.createdAt, sinceWithBuffer));
   }
 
   private transformEvents(events: typeof memberLifecycleEvents.$inferSelect[]): Array<{
@@ -80,7 +79,7 @@ export class MemberLifecycleSyncTask {
       guild_id: event.guildId,
       user_id: event.userId,
       event_type: event.eventType,
-      created_at: event.createdAt.toISOString().replace('T', ' ').substring(0, 19),
+      created_at: event.createdAt.toISOString().slice(0, 23).replace('T', ' '),
     }));
   }
 

@@ -19,7 +19,7 @@ export class MessageSyncTask {
 
     try {
       const highWatermark = await this.getHighWatermark();
-      this.logger.info({ highWatermark }, 'Retrieved high-watermark from ClickHouse');
+      this.logger.info({ highWatermark: highWatermark.toISOString() }, 'Retrieved high-watermark from ClickHouse');
 
       const newMessages = await this.extractNewMessages(highWatermark);
 
@@ -59,11 +59,12 @@ export class MessageSyncTask {
 
   private async extractNewMessages(since: Date): Promise<typeof messageEvents.$inferSelect[]> {
     const db = this.databaseService.getDb();
+    const sinceWithBuffer = new Date(since.getTime() + 1);
 
     return await db
       .select()
       .from(messageEvents)
-      .where(gt(messageEvents.createdAt, since));
+      .where(gt(messageEvents.createdAt, sinceWithBuffer));
   }
 
   private transformMessages(messages: typeof messageEvents.$inferSelect[]): Array<{
@@ -80,7 +81,7 @@ export class MessageSyncTask {
       guild_id: msg.guildId,
       channel_id: msg.channelId,
       user_id: msg.userId,
-      created_at: msg.createdAt.toISOString().replace('T', ' ').substring(0, 19),
+      created_at: msg.createdAt.toISOString().slice(0, 23).replace('T', ' '),
       message_kind: msg.messageKind,
       is_bot: msg.isBot ? 1 : 0,
     }));

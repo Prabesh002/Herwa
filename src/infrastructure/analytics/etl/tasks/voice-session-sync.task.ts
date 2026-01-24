@@ -19,7 +19,7 @@ export class VoiceSessionSyncTask {
 
     try {
       const highWatermark = await this.getHighWatermark();
-      this.logger.info({ highWatermark }, 'Retrieved high-watermark from ClickHouse');
+      this.logger.info({ highWatermark: highWatermark.toISOString() }, 'Retrieved high-watermark from ClickHouse');
 
       const newSessions = await this.extractNewSessions(highWatermark);
 
@@ -59,11 +59,12 @@ export class VoiceSessionSyncTask {
 
   private async extractNewSessions(since: Date): Promise<typeof voiceSessions.$inferSelect[]> {
     const db = this.databaseService.getDb();
+    const sinceWithBuffer = new Date(since.getTime() + 1);
 
     return await db
       .select()
       .from(voiceSessions)
-      .where(and(gt(voiceSessions.joinedAt, since), isNotNull(voiceSessions.durationSeconds)));
+      .where(and(gt(voiceSessions.joinedAt, sinceWithBuffer), isNotNull(voiceSessions.durationSeconds)));
   }
 
   private transformSessions(sessions: typeof voiceSessions.$inferSelect[]): Array<{
@@ -80,8 +81,8 @@ export class VoiceSessionSyncTask {
       guild_id: session.guildId,
       channel_id: session.channelId,
       user_id: session.userId,
-      joined_at: session.joinedAt.toISOString().replace('T', ' ').substring(0, 19),
-      left_at: session.leftAt!.toISOString().replace('T', ' ').substring(0, 19),
+      joined_at: session.joinedAt.toISOString().slice(0, 23).replace('T', ' '),
+      left_at: session.leftAt!.toISOString().slice(0, 23).replace('T', ' '),
       duration_seconds: session.durationSeconds!,
     }));
   }
