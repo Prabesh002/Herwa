@@ -49,6 +49,19 @@ services:
         soft: 262144
         hard: 262144
 
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile.etl
+    container_name: herwa-etl-dev
+    restart: always
+    env_file: .env
+    depends_on:
+      - db
+      - analytics_db
+    volumes:
+      - ./crontab.dev:/etc/crontabs/root
+
 volumes:
   herwa-data-dev:
   herwa-analytics-data-dev:

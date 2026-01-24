@@ -41,6 +41,19 @@ services:
         soft: 262144
         hard: 262144
 
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile.etl
+    container_name: herwa-etl-prod
+    restart: always
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - analytics_db
+
 volumes:
   herwa-data-prod:
   herwa-analytics-data-prod:
