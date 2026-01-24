@@ -1,0 +1,1 @@
+* * * * * cd /app && npm run etl:run:prod >> /proc/1/fd/1 2>>/proc/1/fd/2

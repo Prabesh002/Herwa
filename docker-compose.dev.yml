@@ -56,11 +56,11 @@ services:
     container_name: herwa-etl-dev
     restart: always
     env_file: .env
-    environment:
-      - NODE_ENV=production
     depends_on:
       - db
       - analytics_db
+    volumes:
+      - ./crontab.dev:/etc/crontabs/root
 
 volumes:
   herwa-data-dev:

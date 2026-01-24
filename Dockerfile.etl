@@ -1,29 +1,34 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
+# Install cron daemon
+RUN apk add --no-cache busybox-suid
+
+# Use cached layers from Dockerfile.prod for speed
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 FROM deps AS build
 COPY . .
 RUN npm run build --ignore-scripts
 
 # Final, minimal runner stage for the ETL service
-FROM base AS runner
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json .
-COPY --from=build /app/tsconfig.json .
+FROM base
+USER node
+WORKDIR /app/
 
-# Copy and create the ETL script inline to avoid line ending issues
-RUN echo '#!/bin/sh' > /app/run-etl.sh && \
-    echo 'cd /app' >> /app/run-etl.sh && \
-    echo 'npm run etl:run:prod 2>&1' >> /app/run-etl.sh && \
-    chmod +x /app/run-etl.sh
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/package.json .
+COPY --from=build --chown=node:node /app/tsconfig.json .
+# This is the corrected line:
+COPY --from=build --chown=node:node /app/crontab /home/node/crontab
 
-# Create crontab inline
-RUN echo '* * * * * /app/run-etl.sh' > /var/spool/cron/crontabs/root && \
-    chmod 0600 /var/spool/cron/crontabs/root
+# Switch back to root to set up cron
+USER root
+RUN mv /home/node/crontab /etc/crontabs/root && \
+    chmod 0644 /etc/crontabs/root
 
-CMD ["crond", "-f", "-l", "2"]
+# Set the entrypoint to start the cron daemon in the foreground
+CMD ["crond", "-f", "-l", "8"]
