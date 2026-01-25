@@ -1,4 +1,4 @@
----
+
 
 ### **Phase 1: Governance & Logic (The "Brain")**
 *Goal: Move control out of the code and into the database. You should be able to turn features on/off, restrict commands, and manage subscriptions without deploying new code.*
@@ -16,7 +16,7 @@
 **1.3. Visual Polish (Quick Wins)**
 - [ ] **Chart Images:** Update `/server-stats` to generate and attach a beautiful line chart image (using `chartjs`) instead of just text.
 
----
+
 
 ### **Phase 2: Scalability & Data Health (The "Engine")**
 *Goal: Ensure the system can handle 10,000+ servers without slowing down or crashing storage.*
@@ -28,7 +28,7 @@
 **2.2. Performance Caching**
 - [ ] **Permission Cache:** Store guild permissions in memory (RAM) for a few minutes so the bot doesn't spam the database every time a user types a command.
 
----
+
 
 ### **Phase 3: The API Layer (The "Bridge")**
 *Goal: Create a secure doorway for the outside world (Websites) to talk to your data.*
@@ -42,7 +42,7 @@
 - [ ] **API Keys:** A system for generating secret keys (`sk_live_...`).
 - [ ] **Traffic Control:** Implement Rate Limiting (e.g., "100 requests per minute") to prevent developers from crashing your server.
 
----
+
 
 ### **Phase 4: The Web Platform (The "Experience")**
 *Goal: A beautiful dashboard where admins can see graphs and manage their bot.*
@@ -56,7 +56,7 @@
 - [ ] **Global Overview:** See how many servers Herwa is in, total commands run, and system health.
 - [ ] **Subscription Management:** Manually grant "Premium" status to servers or revoke access.
 
----
+
 
 ### **Phase 5: Future-Proofing (The "Enterprise")**
 *Goal: Features that attract massive communities.*
@@ -67,4 +67,3 @@
 **5.2. Widget Builder**
 - [ ] **Embeddable Widgets:** A tool where admins can design a small "Live Stats" card and get a snippet of HTML code to paste onto their own clan websites.
 
----
