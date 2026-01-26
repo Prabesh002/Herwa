@@ -1,5 +1,5 @@
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
-import { memberEventTypeEnum } from '../enums.schema';
+import { memberEventTypeEnum } from './enums.schema';
 
 export const memberLifecycleEvents = pgTable('member_lifecycle_events', {
   id: uuid('id').primaryKey().defaultRandom(),

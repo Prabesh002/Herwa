@@ -1,5 +1,5 @@
 import { pgTable, uuid, varchar, timestamp, boolean } from 'drizzle-orm/pg-core';
-import { messageKindEnum } from '../enums.schema';
+import { messageKindEnum } from './enums.schema';
 
 export const messageEvents = pgTable('message_events', {
   id: uuid('id').primaryKey().defaultRandom(),
