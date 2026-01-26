@@ -1,0 +1,1 @@
+ALTER TABLE "guild_command_permissions" ADD CONSTRAINT "guild_command_permissions_guild_id_command_name_unique" UNIQUE("guild_id","command_name");
