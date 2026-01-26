@@ -1,7 +1,7 @@
 import { Events, GuildMember } from 'discord.js';
 import { IEventHandler } from '@/discord/events/core/event.contract';
 import { AppContainer } from '@/core/app-container';
-import { MemberPersistenceService } from '@/infrastructure/database/services/member-persistence.service';
+import { MemberPersistenceService } from '@/infrastructure/database/services/analytics/member-persistence.service';
 
 export class MemberAddHandler implements IEventHandler<Events.GuildMemberAdd> {
   public readonly eventName = Events.GuildMemberAdd;

@@ -2,7 +2,7 @@ import { Events, Message } from 'discord.js';
 import { IEventHandler } from '@/discord/events/core/event.contract';
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
 import { AppContainer } from '@/core/app-container';
-import { MessagePersistenceService } from '@/infrastructure/database/services/message-persistence.service';
+import { MessagePersistenceService } from '@/infrastructure/database/services/analytics/message-persistence.service';
 import { MessageKind } from '@/infrastructure/database/schema';
 
 export class MessageCreateHandler implements IEventHandler<Events.MessageCreate> {
