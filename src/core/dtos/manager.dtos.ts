@@ -34,6 +34,14 @@ export interface LinkFeatureToTierDto {
 }
 
 
+export interface EntitlementCheckDto {
+  guildId: string;
+  userId: string;
+  commandName: string;
+  channelId: string;
+  memberRoles: string[];
+}
+
 export interface ChangeGuildTierDto {
   guildId: string;
   tierName: string;

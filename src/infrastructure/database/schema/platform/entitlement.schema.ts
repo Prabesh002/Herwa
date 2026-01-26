@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, boolean, timestamp, integer, primaryKey, text } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, boolean, timestamp, integer, primaryKey, text, unique } from 'drizzle-orm/pg-core';
 import { subscriptionTiers, systemFeatures, systemCommands } from './catalog.schema';
 
 export const guildSettings = pgTable('guild_settings', {
@@ -30,8 +30,11 @@ export const guildCommandPermissions = pgTable('guild_command_permissions', {
   id: uuid('id').primaryKey().defaultRandom(),
   guildId: varchar('guild_id', { length: 256 }).references(() => guildSettings.guildId).notNull(),
   commandName: varchar('command_name', { length: 255 }).references(() => systemCommands.discordCommandName).notNull(),
+  
   allowedRoleIds: text('allowed_role_ids').array(),
   allowedChannelIds: text('allowed_channel_ids').array(),
   denyRoleIds: text('deny_role_ids').array(),
+  
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (t) => ({unq: unique().on(t.guildId, t.commandName),
+}));
