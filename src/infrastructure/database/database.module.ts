@@ -3,9 +3,9 @@ import { DatabaseService } from '@/infrastructure/database/core/database.service
 import { MessageRepository } from './repositories/analytics/message.repository';
 import { MemberLifecycleRepository } from './repositories/analytics/member-lifecycle.repository';
 import { VoiceRepository } from './repositories/analytics/voice.repository';
-import { MessagePersistenceService } from './services/message-persistence.service';
-import { MemberPersistenceService } from './services/member-persistence.service';
-import { VoicePersistenceService } from './services/voice-persistence.service';
+import { MessagePersistenceService } from './services/analytics/message-persistence.service';
+import { MemberPersistenceService } from './services/analytics/member-persistence.service';
+import { VoicePersistenceService } from './services/analytics/voice-persistence.service';
 
 export function loadDatabaseModule(container: AppContainer): void {
   container.register(DatabaseService, new DatabaseService());

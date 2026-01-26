@@ -1,7 +1,7 @@
 import { VoiceState } from 'discord.js';
 import { AppContainer } from '@/core/app-container';
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
-import { VoicePersistenceService } from '@/infrastructure/database/services/voice-persistence.service';
+import { VoicePersistenceService } from '@/infrastructure/database/services/analytics/voice-persistence.service';
 import type { voiceSessions } from '@/infrastructure/database/schema/analytics/voice-sessions.schema';
 
 type NewVoiceSession = typeof voiceSessions.$inferInsert;
