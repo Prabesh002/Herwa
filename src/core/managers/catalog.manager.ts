@@ -29,7 +29,7 @@ export class CatalogManager {
           name: dto.freeTierName,
           priceMonthly: dto.freeTierPrice,
           isDefault: true,
-          description: 'Standard access tier',
+          description: dto.freeTierDescription,
         });
       }
 
@@ -39,7 +39,7 @@ export class CatalogManager {
           code: dto.coreFeatureCode,
           name: dto.coreFeatureName,
           isGlobalEnabled: true,
-          description: 'Essential system functions',
+          description: dto.coreFeatureDescription,
         });
       }
     });

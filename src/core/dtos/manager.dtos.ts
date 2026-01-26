@@ -3,10 +3,11 @@ import { resetPeriodEnum, subscriptionStatusEnum, paymentStatusEnum } from '@/in
 export interface EnsureDefaultCatalogDto {
   freeTierName: string;
   freeTierPrice: number;
+  freeTierDescription: string;
   coreFeatureCode: string;
   coreFeatureName: string;
+  coreFeatureDescription: string;
 }
-
 export interface RegisterCommandDto {
   featureCode: string; 
   commandName: string;
