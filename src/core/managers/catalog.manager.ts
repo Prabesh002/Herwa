@@ -5,7 +5,8 @@ import { SystemFeatureRepository } from '@/infrastructure/database/repositories/
 import { SubscriptionTierPersistenceService } from '@/infrastructure/database/services/platform/catalog/subscription-tier.persistence.service';
 import { SystemFeaturePersistenceService } from '@/infrastructure/database/services/platform/catalog/system-feature.persistence.service';
 import { SystemCommandPersistenceService } from '@/infrastructure/database/services/platform/catalog/system-command.persistence.service';
-import { EnsureDefaultCatalogDto, RegisterCommandDto } from '@/core/dtos/manager.dtos';
+import { TierFeaturePersistenceService } from '@/infrastructure/database/services/platform/catalog/tier-feature.persistence.service';
+import { CreateFeatureDto, CreateTierDto, EnsureDefaultCatalogDto, LinkFeatureToTierDto, RegisterCommandDto } from '@/core/dtos/manager.dtos';
 
 export class CatalogManager {
   private db = AppContainer.getInstance().get(DatabaseService);
@@ -16,6 +17,7 @@ export class CatalogManager {
   private tierService = AppContainer.getInstance().get(SubscriptionTierPersistenceService);
   private featureService = AppContainer.getInstance().get(SystemFeaturePersistenceService);
   private commandService = AppContainer.getInstance().get(SystemCommandPersistenceService);
+  private tierFeatureService = AppContainer.getInstance().get(TierFeaturePersistenceService);
 
   /**
    * Idempotent method to ensure the base system exists (Free Tier, Core Feature).
@@ -60,6 +62,51 @@ export class CatalogManager {
         discordCommandName: dto.commandName,
         featureId: feature.id,
         description: dto.description,
+      });
+    });
+  }
+
+  public async createTier(dto: CreateTierDto) {
+    return await this.db.getDb().transaction(async (tx) => {
+      const existing = await this.tierRepo.getByName(tx, dto.name);
+      if (existing) {
+        throw new Error(`Subscription tier with name '${dto.name}' already exists.`);
+      }
+
+      const newTierId = await this.tierService.create(tx, dto);
+      const newTier = await this.tierRepo.getById(tx, newTierId);
+      if (!newTier) throw new Error('Failed to create tier.');
+      
+      return newTier;
+    });
+  }
+
+  public async createFeature(dto: CreateFeatureDto) {
+    return await this.db.getDb().transaction(async (tx) => {
+      const existing = await this.featureRepo.getByCode(tx, dto.code);
+      if (existing) {
+        throw new Error(`System feature with code '${dto.code}' already exists.`);
+      }
+
+      const newFeatureId = await this.featureService.create(tx, dto);
+      const newFeature = await this.featureRepo.getById(tx, newFeatureId);
+      if (!newFeature) throw new Error('Failed to create feature.');
+
+      return newFeature;
+    });
+  }
+
+  public async linkFeatureToTier(dto: LinkFeatureToTierDto): Promise<void> {
+    await this.db.getDb().transaction(async (tx) => {
+      const tier = await this.tierRepo.getByName(tx, dto.tierName);
+      if (!tier) throw new Error(`Tier '${dto.tierName}' not found.`);
+
+      const feature = await this.featureRepo.getByCode(tx, dto.featureCode);
+      if (!feature) throw new Error(`Feature '${dto.featureCode}' not found.`);
+
+      await this.tierFeatureService.link(tx, {
+        tierId: tier.id,
+        featureId: feature.id,
       });
     });
   }

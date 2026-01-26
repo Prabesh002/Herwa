@@ -8,11 +8,31 @@ export interface EnsureDefaultCatalogDto {
   coreFeatureName: string;
   coreFeatureDescription: string;
 }
+
 export interface RegisterCommandDto {
-  featureCode: string; 
+  featureCode: string;
   commandName: string;
   description?: string;
 }
+
+export interface CreateTierDto {
+  name: string;
+  description: string;
+  priceMonthly: number;
+  isDefault?: boolean;
+}
+
+export interface CreateFeatureDto {
+  code: string;
+  name: string;
+  description: string;
+}
+
+export interface LinkFeatureToTierDto {
+  featureCode: string;
+  tierName: string;
+}
+
 
 export interface ChangeGuildTierDto {
   guildId: string;
