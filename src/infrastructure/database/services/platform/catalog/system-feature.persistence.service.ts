@@ -8,6 +8,10 @@ export class SystemFeaturePersistenceService {
       .insert(systemFeatures)
       .values(dto)
       .returning({ id: systemFeatures.id });
+
+    if (!created) {
+      throw new Error('Failed to create system feature.');
+    }
     return created.id;
   }
 }

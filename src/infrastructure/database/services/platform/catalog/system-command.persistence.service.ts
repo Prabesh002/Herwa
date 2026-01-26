@@ -15,6 +15,10 @@ export class SystemCommandPersistenceService {
         },
       })
       .returning({ id: systemCommands.id });
+
+    if (!record) {
+      throw new Error(`Failed to upsert system command: ${dto.discordCommandName}`);
+    }
     return record.id;
   }
 }

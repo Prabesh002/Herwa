@@ -8,6 +8,10 @@ export class SubscriptionTierPersistenceService {
       .insert(subscriptionTiers)
       .values(dto)
       .returning({ id: subscriptionTiers.id });
+
+    if (!created) {
+      throw new Error('Failed to create subscription tier.');
+    }
     return created.id;
   }
 }

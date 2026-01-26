@@ -8,6 +8,10 @@ export class GuildSubscriptionPersistenceService {
       .insert(guildSubscriptions)
       .values(dto)
       .returning({ id: guildSubscriptions.id });
+
+    if (!record) {
+      throw new Error('Failed to create guild subscription record.');
+    }
     return record.id;
   }
 }

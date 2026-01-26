@@ -8,6 +8,10 @@ export class PaymentPersistenceService {
       .insert(payments)
       .values(dto)
       .returning({ id: payments.id });
+
+    if (!record) {
+      throw new Error('Failed to create payment record.');
+    }
     return record.id;
   }
 }
