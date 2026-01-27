@@ -1,27 +1,31 @@
-import { Events, Interaction, MessageFlags } from 'discord.js';
+import { Events, Interaction, MessageFlags, GuildMemberRoleManager } from 'discord.js';
 import { AppContainer } from '@/core/app-container';
 import { DiscordClientService } from '@/discord/core/discord-client.service';
 import { CommandRegistryService } from '@/discord/commands/command-registry.service';
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
 import { ConfigService } from '@/infrastructure/config/config.service';
+import { EntitlementManager } from '@/core/managers/entitlement.manager';
 
 export class InteractionHandlingService {
   private readonly logger: Logger;
   private readonly clientService: DiscordClientService;
   private readonly commandRegistry: CommandRegistryService;
+  private readonly entitlementManager: EntitlementManager;
 
   constructor() {
-    this.clientService = AppContainer.getInstance().get(DiscordClientService);
-    this.commandRegistry = AppContainer.getInstance().get(CommandRegistryService);
+    const container = AppContainer.getInstance();
+    this.clientService = container.get(DiscordClientService);
+    this.commandRegistry = container.get(CommandRegistryService);
+    this.entitlementManager = container.get(EntitlementManager);
     
-    const config = AppContainer.getInstance().get(ConfigService).get();
+    const config = container.get(ConfigService).get();
     this.logger = createLogger(config.logLevel).child({ service: 'InteractionHandler' });
   }
 
   public start(): void {
     const client = this.clientService.getClient();
     client.on(Events.InteractionCreate, this.handleInteraction.bind(this));
-    this.logger.info('Interaction handler started and listening for events.');
+    this.logger.info('Interaction handler started with Entitlement Guardrails.');
   }
 
   private async handleInteraction(interaction: Interaction): Promise<void> {
@@ -35,6 +39,33 @@ export class InteractionHandlingService {
         flags: [MessageFlags.Ephemeral],
       });
       return;
+    }
+
+    if (interaction.guildId) {
+      const memberRoles = interaction.member?.roles as GuildMemberRoleManager;
+      const roleIds = Array.from(memberRoles.cache.keys());
+
+      const entitlement = await this.entitlementManager.checkEntitlement({
+        guildId: interaction.guildId,
+        userId: interaction.user.id,
+        commandName: interaction.commandName,
+        channelId: interaction.channelId,
+        memberRoles: roleIds,
+      });
+
+      if (!entitlement.isEntitled) {
+        this.logger.info({ 
+          guildId: interaction.guildId, 
+          command: interaction.commandName, 
+          reason: entitlement.reasonCode 
+        }, 'Command execution denied by Entitlement Manager.');
+
+        await interaction.reply({
+          content: entitlement.message || 'You do not have permission to use this command.',
+          flags: [MessageFlags.Ephemeral],
+        });
+        return;
+      }
     }
 
     try {
