@@ -81,7 +81,7 @@ export class EntitlementManager {
       )
     });
     if (!tierFeature) {
-      return { isEntitled: false, reasonCode: EntitlementDenialReason.TIER_MISSING_FEATURE, message: `This command requires the '${guildSettings.tier.name}' tier or higher.` };
+      return { isEntitled: false, reasonCode: EntitlementDenialReason.TIER_MISSING_FEATURE,  message: `The '${command.feature.name}' feature is not available on your current tier (${guildSettings.tier.name}). Upgrade to a higher tier to use this command.`  };
     }
 
     const override = await this.overrideRepo.getOverride(db, guildId, command.feature.id);
