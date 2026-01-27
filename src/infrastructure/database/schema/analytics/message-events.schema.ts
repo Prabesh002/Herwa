@@ -9,4 +9,5 @@ export const messageEvents = pgTable('message_events', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   messageKind: messageKindEnum('message_kind').notNull(),
   isBot: boolean('is_bot').notNull(),
+  chIngestedAt: timestamp('ch_ingested_at'), 
 });
