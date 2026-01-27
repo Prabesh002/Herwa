@@ -8,4 +8,8 @@ export class StatsProvider {
   public async getServerStats(guildId: string): Promise<ServerStatsData> {
     return this.statsRepo.getServerStats(guildId);
   }
+
+  public async getDailyMessageActivity(guildId: string) {
+    return this.statsRepo.getDailyMessageActivity(guildId);
+  }
 }

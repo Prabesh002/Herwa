@@ -24,7 +24,7 @@ export const DEFAULT_FEATURES = [
     code: 'analytics',
     name: 'Advanced Analytics',
     description: 'Deep insights into message velocity and user engagement.',
-    tiers: ['Pro'],
+    tiers: ['Free' , 'Pro'],
   },
 ];
 

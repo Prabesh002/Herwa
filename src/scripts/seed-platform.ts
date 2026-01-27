@@ -8,6 +8,7 @@ import { CommandRegistryService } from '@/discord/commands/command-registry.serv
 import { loadCommands } from '@/discord/commands/command.loader';
 import { ConfigService } from '@/infrastructure/config/config.service';
 import { StatsProvider } from '@/discord/providers/stats.provider';
+import { ChartGeneratorService } from '@/discord/services/chart-generator.service';
 import { 
   DEFAULT_TIERS, 
   DEFAULT_FEATURES, 
@@ -27,6 +28,7 @@ async function main() {
   loadManagerModule(container);
 
   container.register(StatsProvider, new StatsProvider());
+  container.register(ChartGeneratorService, new ChartGeneratorService());
 
   const commandRegistry = new CommandRegistryService();
   container.register(CommandRegistryService, commandRegistry);

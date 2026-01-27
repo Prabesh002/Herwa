@@ -4,3 +4,8 @@ export interface ServerStatsData {
   leaveCount: number;
   totalVoiceSeconds: number;
 }
+
+export interface DailyActivityData {
+  day: string;
+  count: number;
+}
