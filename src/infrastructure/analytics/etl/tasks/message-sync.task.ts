@@ -1,7 +1,7 @@
 import { DatabaseService } from '@/infrastructure/database/core/database.service';
 import { ClickHouseService } from '@/infrastructure/analytics/core/clickhouse.service';
 import { messageEvents } from '@/infrastructure/database/schema';
-import { gt } from 'drizzle-orm';
+import { isNull, inArray } from 'drizzle-orm';
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
 
 export class MessageSyncTask {
@@ -14,96 +14,48 @@ export class MessageSyncTask {
     this.logger = createLogger('info').child({ service: 'MessageSyncTask' });
   }
 
+  //TODO for now 1k rows, later will have to see about batching / chunking for larger volumes
   public async run(): Promise<void> {
-    this.logger.info('Starting message events sync...');
-
-    try {
-      const highWatermark = await this.getHighWatermark();
-      this.logger.info({ highWatermark: highWatermark.toISOString() }, 'Retrieved high-watermark from ClickHouse');
-
-      const newMessages = await this.extractNewMessages(highWatermark);
-
-      if (newMessages.length === 0) {
-        this.logger.info('No new messages to sync');
-        return;
-      }
-
-      this.logger.info({ count: newMessages.length }, 'Found new messages to sync');
-
-      const transformedData = this.transformMessages(newMessages);
-      await this.loadToClickHouse(transformedData);
-
-      this.logger.info({ count: newMessages.length }, 'Successfully synced messages');
-    } catch (error) {
-      this.logger.error({ error }, 'Failed to sync message events');
-      throw error;
-    }
-  }
-
-  private async getHighWatermark(): Promise<Date> {
-    const client = this.clickhouseService.getClient();
-
-    const result = await client.query({
-      query: 'SELECT MAX(created_at) as max_timestamp FROM message_events',
-      format: 'JSONEachRow',
-    });
-
-    const rows = await result.json<{ max_timestamp: string | null }>();
-
-    if (rows.length > 0 && rows[0] && rows[0].max_timestamp) {
-      return new Date(rows[0].max_timestamp);
-    }
-
-    return new Date(0);
-  }
-
-  private async extractNewMessages(since: Date): Promise<typeof messageEvents.$inferSelect[]> {
     const db = this.databaseService.getDb();
-    const sinceWithBuffer = new Date(since.getTime() + 1);
-
-    return await db
+    
+    const newMessages = await db
       .select()
       .from(messageEvents)
-      .where(gt(messageEvents.createdAt, sinceWithBuffer));
-  }
+      .where(isNull(messageEvents.chIngestedAt))
+      .limit(1000);
 
-  private transformMessages(messages: typeof messageEvents.$inferSelect[]): Array<{
-    id: string;
-    guild_id: string;
-    channel_id: string;
-    user_id: string;
-    created_at: string;
-    message_kind: string;
-    is_bot: number;
-  }> {
-    return messages.map((msg) => ({
-      id: msg.id,
-      guild_id: msg.guildId,
-      channel_id: msg.channelId,
-      user_id: msg.userId,
-      created_at: msg.createdAt.toISOString().slice(0, 23).replace('T', ' '),
-      message_kind: msg.messageKind,
-      is_bot: msg.isBot ? 1 : 0,
-    }));
-  }
+    if (newMessages.length === 0) return;
 
-  private async loadToClickHouse(
-    data: Array<{
-      id: string;
-      guild_id: string;
-      channel_id: string;
-      user_id: string;
-      created_at: string;
-      message_kind: string;
-      is_bot: number;
-    }>,
-  ): Promise<void> {
-    const client = this.clickhouseService.getClient();
+    this.logger.info({ count: newMessages.length }, 'Syncing messages to ClickHouse...');
 
-    await client.insert({
-      table: 'message_events',
-      values: data,
-      format: 'JSONEachRow',
-    });
+    try {
+      const transformedData = newMessages.map((msg) => ({
+        id: msg.id,
+        guild_id: msg.guildId,
+        channel_id: msg.channelId,
+        user_id: msg.userId,
+        created_at: msg.createdAt.toISOString().slice(0, 23).replace('T', ' '),
+        message_kind: msg.messageKind,
+        is_bot: msg.isBot ? 1 : 0,
+      }));
+
+      const client = this.clickhouseService.getClient();
+      await client.insert({
+        table: 'message_events',
+        values: transformedData,
+        format: 'JSONEachRow',
+      });
+
+      const messageIds = newMessages.map(m => m.id);
+      await db
+        .update(messageEvents)
+        .set({ chIngestedAt: new Date() })
+        .where(inArray(messageEvents.id, messageIds));
+
+      this.logger.info({ count: newMessages.length }, 'Successfully synced and acknowledged messages.');
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to sync message events. Rows remain un-ingested in Postgres.');
+      throw error;
+    }
   }
 }
