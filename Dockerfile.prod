@@ -1,8 +1,10 @@
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache postgresql-client
+RUN apk add --no-cache postgresql-client cairo pango jpeg giflib
 
 FROM base AS deps
+
+RUN apk add --no-cache build-base g++ cairo-dev pango-dev giflib-dev pixman-dev pangomm-dev libjpeg-turbo-dev freetype-dev
 COPY package.json package-lock.json* ./
 RUN npm ci
 
