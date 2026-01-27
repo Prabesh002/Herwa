@@ -1,5 +1,6 @@
 import { pgTable, uuid, varchar, boolean, timestamp, integer, primaryKey, text, unique } from 'drizzle-orm/pg-core';
 import { subscriptionTiers, systemFeatures, systemCommands } from './catalog.schema';
+import { relations } from 'drizzle-orm';
 
 export const guildSettings = pgTable('guild_settings', {
   guildId: varchar('guild_id', { length: 256 }).primaryKey(),
@@ -37,4 +38,35 @@ export const guildCommandPermissions = pgTable('guild_command_permissions', {
   
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => ({unq: unique().on(t.guildId, t.commandName),
+}));
+
+export const guildSettingsRelations = relations(guildSettings, ({ one, many }) => ({
+  tier: one(subscriptionTiers, {
+    fields: [guildSettings.tierId],
+    references: [subscriptionTiers.id],
+  }),
+  overrides: many(guildFeatureOverrides),
+  permissions: many(guildCommandPermissions),
+}));
+
+export const guildFeatureOverridesRelations = relations(guildFeatureOverrides, ({ one }) => ({
+  guild: one(guildSettings, {
+    fields: [guildFeatureOverrides.guildId],
+    references: [guildSettings.guildId],
+  }),
+  feature: one(systemFeatures, {
+    fields: [guildFeatureOverrides.featureId],
+    references: [systemFeatures.id],
+  }),
+}));
+
+export const guildCommandPermissionsRelations = relations(guildCommandPermissions, ({ one }) => ({
+  guild: one(guildSettings, {
+    fields: [guildCommandPermissions.guildId],
+    references: [guildSettings.guildId],
+  }),
+  command: one(systemCommands, {
+    fields: [guildCommandPermissions.commandName],
+    references: [systemCommands.discordCommandName],
+  }),
 }));

@@ -2,6 +2,7 @@ import { pgTable, uuid, varchar, timestamp, integer } from 'drizzle-orm/pg-core'
 import { subscriptionTiers } from './catalog.schema';
 import { guildSettings } from './entitlement.schema';
 import { subscriptionStatusEnum, paymentStatusEnum } from './enums.schema';
+import { relations } from 'drizzle-orm';
 
 export const guildSubscriptions = pgTable('guild_subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -25,3 +26,22 @@ export const payments = pgTable('payments', {
   paidAt: timestamp('paid_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const guildSubscriptionsRelations = relations(guildSubscriptions, ({ one, many }) => ({
+  guild: one(guildSettings, {
+    fields: [guildSubscriptions.guildId],
+    references: [guildSettings.guildId],
+  }),
+  tier: one(subscriptionTiers, {
+    fields: [guildSubscriptions.tierId],
+    references: [subscriptionTiers.id],
+  }),
+  payments: many(payments),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  subscription: one(guildSubscriptions, {
+    fields: [payments.subscriptionId],
+    references: [guildSubscriptions.id],
+  }),
+}));
