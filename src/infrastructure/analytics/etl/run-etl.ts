@@ -35,7 +35,7 @@ async function main(): Promise<void> {
     const messageSyncTask = new MessageSyncTask(databaseService, clickhouseService);
     const memberSyncTask = new MemberLifecycleSyncTask(databaseService, clickhouseService);
     const voiceSyncTask = new VoiceSessionSyncTask(databaseService, clickhouseService);
-    const cleanup = new PostgresCleanupTask(databaseService);
+    const cleanup = new PostgresCleanupTask(databaseService, configService);
 
     logger.info('Running message events sync task...');
     await messageSyncTask.run();
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     await voiceSyncTask.run();
 
     logger.info('ETL batch process completed successfully');
-    
+
     logger.info('Running Postgres cleanup task...');
     await cleanup.run();
 

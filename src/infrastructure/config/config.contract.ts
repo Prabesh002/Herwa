@@ -5,4 +5,5 @@ export interface AppConfig {
   logLevel: string;
   databaseUrl: string;
   clickhouseUrl: string;
+  postgresRetentionHours: number;
 }

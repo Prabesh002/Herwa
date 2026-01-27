@@ -31,6 +31,9 @@ export class ConfigService {
     }
     const clickhouseUrl = `http://${chHost}:${chPortHttp}`;
 
+    const rawRetention = process.env.DB_CLEANUP_RETENTION_HOURS;
+    const postgresRetentionHours = rawRetention !== undefined ? Number(rawRetention) : 24;
+
     this.config = {
       discordToken,
       discordClientId,
@@ -38,6 +41,7 @@ export class ConfigService {
       logLevel,
       databaseUrl,
       clickhouseUrl,
+      postgresRetentionHours,
     };
   }
 
