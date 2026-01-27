@@ -22,13 +22,16 @@ COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/package.json .
 COPY --from=build --chown=node:node /app/tsconfig.json .
-# This is the corrected line:
+
 COPY --from=build --chown=node:node /app/crontab /home/node/crontab
 
 # Switch back to root to set up cron
 USER root
-RUN mv /home/node/crontab /etc/crontabs/root && \
-    chmod 0644 /etc/crontabs/root
+
+RUN sed -i 's/\r$//' /home/node/crontab && \
+    chown root:root /home/node/crontab && \
+    mv /home/node/crontab /etc/crontabs/root && \
+    chmod 0600 /etc/crontabs/root
 
 # Set the entrypoint to start the cron daemon in the foreground
 CMD ["crond", "-f", "-l", "8"]
