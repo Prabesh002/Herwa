@@ -8,4 +8,5 @@ export const voiceSessions = pgTable('voice_sessions', {
   joinedAt: timestamp('joined_at').notNull(),
   leftAt: timestamp('left_at'),
   durationSeconds: integer('duration_seconds'),
+  chIngestedAt: timestamp('ch_ingested_at'),
 });

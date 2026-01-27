@@ -7,4 +7,5 @@ export const memberLifecycleEvents = pgTable('member_lifecycle_events', {
   userId: varchar('user_id', { length: 256 }).notNull(),
   eventType: memberEventTypeEnum('event_type').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  chIngestedAt: timestamp('ch_ingested_at'),
 });
