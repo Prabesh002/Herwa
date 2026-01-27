@@ -1,7 +1,18 @@
 FROM node:20-alpine
 WORKDIR /app
 
-RUN apk add --no-cache postgresql-client
+RUN apk add --no-cache \
+    postgresql-client \
+    build-base \
+    g++ \
+    cairo-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pangomm-dev \
+    libjpeg-turbo-dev \
+    font-noto \
+    freetype-dev
 
 COPY package.json package-lock.json* ./
 
