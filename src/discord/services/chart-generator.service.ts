@@ -1,5 +1,6 @@
-import { ChartConfiguration } from 'chart.js';
+import { ChartConfiguration, Chart } from 'chart.js';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { DailyActivityData } from '@/discord/providers/models/stats.provider.contract';
 
 export class ChartGeneratorService {
@@ -8,8 +9,11 @@ export class ChartGeneratorService {
   constructor() {
     this.renderer = new ChartJSNodeCanvas({
       width: 800,
-      height: 400,
+      height: 350,
       backgroundColour: '#2b2d31',
+      plugins: {
+        modern: [ChartDataLabels]
+      }
     });
   }
 
@@ -19,29 +23,49 @@ export class ChartGeneratorService {
       data: {
         labels: data.map(d => d.day),
         datasets: [{
-          label: 'Messages',
           data: data.map(d => d.count),
-          borderColor: '#5865F2',
-          backgroundColor: 'rgba(88, 101, 242, 0.1)',
-          fill: true,
-          tension: 0.4, 
-          pointRadius: 5,
-          pointBackgroundColor: '#5865F2'
+          borderColor: '#5865f2',
+          borderWidth: 4,
+          pointBackgroundColor: '#ffffff', 
+          pointBorderColor: '#5865f2',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          fill: 'start',
+          backgroundColor: (context: { chart: { ctx: any; }; }) => {
+            const canvas = context.chart.ctx;
+            const gradient = canvas.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(88, 101, 242, 0.3)');
+            gradient.addColorStop(1, 'rgba(88, 101, 242, 0)');
+            return gradient;
+          },
+          tension: 0.4,
         }]
       },
       options: {
-        responsive: false,
+        layout: { padding: { top: 30, left: 20, right: 30, bottom: 20 } },
         plugins: {
           legend: { display: false },
+          tooltip: { enabled: false },
+          datalabels: {
+            align: 'top',
+            offset: 8,
+            color: '#ffffff',
+            font: { weight: 'bold', size: 14, family: 'Noto Sans' },
+            formatter: (value: number) => value > 0 ? value : '',
+          }
         },
         scales: {
           y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: '#ffffff' }
+            display: false, 
+            beginAtZero: true,
+            grid: { display: false }
           },
           x: {
             grid: { display: false },
-            ticks: { color: '#ffffff' }
+            ticks: { 
+                color: '#949ba4', 
+                font: { size: 14, family: 'Noto Sans' } 
+            }
           }
         }
       }

@@ -61,19 +61,23 @@ export class StatsRepository {
   public async getDailyMessageActivity(guildId: string, days: number = 7): Promise<DailyActivityData[]> {
     const query = `
       SELECT 
-        toDate(created_at) as day, 
-        count() as total 
-      FROM message_events 
-      WHERE guild_id = {guildId:String} 
-        AND created_at >= subtractDays(now(), {days:Int32})
+        toDate(day_alias) as day, 
+        count(id) as total 
+      FROM (
+          SELECT toDate(created_at) as day_alias, id 
+          FROM message_events 
+          WHERE guild_id = {guildId:String} 
+            AND created_at >= subtractDays(now(), {days:Int32})
+      ) 
       GROUP BY day 
-      ORDER BY day ASC
+      ORDER BY day ASC 
+      WITH FILL FROM toDate(subtractDays(now(), {days:Int32})) TO toDate(now()) + 1 STEP 1
     `;
 
     const raw = await this.executeQuery<DailyResult>(query, { guildId, days });
     
     return raw.map(r => ({
-      day: r.day,
+      day: new Date(r.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       count: Number(r.total)
     }));
   }
