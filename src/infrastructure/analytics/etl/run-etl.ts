@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { AppContainer } from '@/core/app-container';
 import { ConfigService } from '@/infrastructure/config/config.service';
 import { DatabaseService } from '@/infrastructure/database/core/database.service';

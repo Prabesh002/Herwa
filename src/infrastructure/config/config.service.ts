@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { AppConfig } from '@/infrastructure/config/config.contract';
 
 export class ConfigService {

@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { App } from '@/core/app';
 
 const main = async (): Promise<void> => {
