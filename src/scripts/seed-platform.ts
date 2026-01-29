@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { AppContainer } from '@/core/app-container';
 import { loadDatabaseModule } from '@/infrastructure/database/database.module';
 import { loadAnalyticsModule } from '@/infrastructure/analytics/analytics.module';

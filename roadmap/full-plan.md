@@ -1,69 +1,48 @@
+### Phase 1: Governance & Logic (COMPLETED)
+- [x] **Database Layers:** Catalog (Tiers/Features), Entitlement (State), History (Immutable truth).
+- [x] **Manager Orchestration:** Business logic decoupled from Discord and Database.
+- [x] **Feature Discovery:** Auto-syncing code commands to DB records.
+- [x] **The Guardrail:** Live permission/tier checking on every interaction.
+- [x] **Visual Polish:** High-precision chart generation with custom fonts.
 
+### Phase 2: Data Engine (COMPLETED)
+- [x] **OLAP Power:** ClickHouse integration for massive data.
+- [x] **Reliable ETL:** ACK-based sync to prevent data loss.
+- [x] **Postgres Janitor:** Automatic self-cleaning with configurable retention.
 
-### **Phase 1: Governance & Logic (The "Brain")**
-*Goal: Move control out of the code and into the database. You should be able to turn features on/off, restrict commands, and manage subscriptions without deploying new code.*
+---
 
-**1.1. Dynamic Feature System (SaaS Foundation)**
-- [ ] **Database Structure:** Create the "Switchboard." Tables to define Features (e.g., "Voice Analytics"), Modules, and Subscription Tiers (Free vs. Premium).
-- [ ] **Feature Discovery:** A script that automatically detects your code commands and registers them in the database so you can manage them.
-- [ ] **Guild Configs:** The ability to toggle specific features On or Off for specific servers (e.g., disabling "Music" but keeping "Stats").
+### Phase 3: Optimization & Real-World Readiness (CURRENT)
+*Goal: Prepare the bot for thousands of simultaneous users.*
 
-**1.2. Role-Based Access Control (RBAC)**
-- [ ] **Custom Permissions:** Go beyond Discord's "Admin" role. Allow server owners to say: *"Only the 'Support' role can view Ticket Stats"* or *"Block 'New Members' from using Voice Commands."*
-- [ ] **Channel Allow-listing:** Restrict spammy analytics commands to specific channels only.
-- [ ] **The Guardrail Service:** A central check that runs before *every* command to enforce Subscriptions, Feature Toggles, and RBAC permissions.
+- [ ] **3.1. Performance Caching (High Priority):** 
+    *   Currently, every command types `/` triggers a Postgres lookup for Tiers and Permissions.
+    *   **Task:** Implement an in-memory (or Redis) cache for the `EntitlementManager`.
+- [ ] **3.2. Usage Quotas (The "SaaS" Limit):**
+    *   We have the `guild_feature_usage` table but aren't enforcing limits.
+    *   **Task:** Implement logic to block commands if a guild hits their "Free Tier" monthly message limit.
+- [ ] **3.3. Error Tracking:**
+    *   Integrate Sentry or a professional logging sink for the production environment.
 
-**1.3. Visual Polish (Quick Wins)**
-- [ ] **Chart Images:** Update `/server-stats` to generate and attach a beautiful line chart image (using `chartjs`) instead of just text.
+### Phase 4: The API Layer (The "Bridge")
+*Goal: Expose Herwa's power to the web.*
 
+- [ ] **4.1. Standalone API (`herwa-api`):** 
+    *   Create a new microservice in the `docker-compose`.
+    *   Connect it to the same ClickHouse and Postgres instances.
+- [ ] **4.2. Developer Keys:** 
+    *   Implement logic to generate and validate `sk_live_...` API keys.
+    *   Create the "Developer Sandbox" where they can test endpoints.
+- [ ] **4.3. Authentication:** 
+    *   Set up Discord OAuth2 so users can log in to your future website.
 
+### Phase 5: The Web Dashboard (The "Product")
+*Goal: A beautiful UI for server owners.*
 
-### **Phase 2: Scalability & Data Health (The "Engine")**
-*Goal: Ensure the system can handle 10,000+ servers without slowing down or crashing storage.*
-
-**2.1. The "Infinite Loop" Prevention**
-- [ ] **Postgres Cleanup:** Automate the deletion of data in PostgreSQL once it has been safely moved to ClickHouse. Keep PostgreSQL empty and fast.
-- [ ] **ClickHouse Aging:** Configure "Time-to-Live" rules. Keep high-precision data for 3 months, then automatically compress it into "Hourly Summaries" for long-term history to save storage space.
-
-**2.2. Performance Caching**
-- [ ] **Permission Cache:** Store guild permissions in memory (RAM) for a few minutes so the bot doesn't spam the database every time a user types a command.
-
-
-
-### **Phase 3: The API Layer (The "Bridge")**
-*Goal: Create a secure doorway for the outside world (Websites) to talk to your data.*
-
-**3.1. The API Service**
-- [ ] **New Microservice:** Create `herwa-api`. It runs separately from the bot so a website crash doesn't kill the bot.
-- [ ] **Authentication:** Implement "Login with Discord" so we know who is asking for data.
-- [ ] **Data Endpoints:** Create secure URLs (e.g., `GET /api/guilds/{id}/stats`) that fetch data directly from ClickHouse.
-
-**3.2. Developer Access (The "Moat")**
-- [ ] **API Keys:** A system for generating secret keys (`sk_live_...`).
-- [ ] **Traffic Control:** Implement Rate Limiting (e.g., "100 requests per minute") to prevent developers from crashing your server.
-
-
-
-### **Phase 4: The Web Platform (The "Experience")**
-*Goal: A beautiful dashboard where admins can see graphs and manage their bot.*
-
-**4.1. The User Dashboard**
-- [ ] **Web Frontend:** A Next.js/React website.
-- [ ] **Visual Graphs:** Interactive charts (Zoom, Pan, Filter) showing the rich data from ClickHouse.
-- [ ] **Configuration UI:** A settings page where admins can toggle features and set up the RBAC permissions we built in Phase 1.
-
-**4.2. The Super Admin Panel (For You)**
-- [ ] **Global Overview:** See how many servers Herwa is in, total commands run, and system health.
-- [ ] **Subscription Management:** Manually grant "Premium" status to servers or revoke access.
-
-
-
-### **Phase 5: Future-Proofing (The "Enterprise")**
-*Goal: Features that attract massive communities.*
-
-**5.1. Data Exports**
-- [ ] **CSV/JSON Export:** Allow admins to download their entire server history for their own records (Premium feature).
-
-**5.2. Widget Builder**
-- [ ] **Embeddable Widgets:** A tool where admins can design a small "Live Stats" card and get a snippet of HTML code to paste onto their own clan websites.
-
+- [ ] **5.1. Dashboard UI:** 
+    *   Built with Next.js and Tailwind.
+    *   Interactive versions of your Discord charts (Zoom, Filter by date).
+- [ ] **5.2. Command Center:** 
+    *   A web interface to toggle features and set RBAC permissions (Roles/Channels) without using Discord commands.
+- [ ] **5.3. Billing Integration:** 
+    *   Connect Stripe to your `payments` table. When a user pays, the `SubscriptionManager` automatically upgrades their tier.

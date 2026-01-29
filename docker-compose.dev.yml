@@ -60,7 +60,7 @@ services:
       - db
       - analytics_db
     volumes:
-      - ./crontab.dev:/etc/crontabs/root
+      - ./crontab.dev:/var/spool/cron/crontabs/root
 
 volumes:
   herwa-data-dev:

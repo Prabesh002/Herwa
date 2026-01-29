@@ -1,37 +1,26 @@
-FROM node:20-alpine AS base
+FROM oven/bun:latest AS base
 WORKDIR /app
 
-# Install cron daemon
-RUN apk add --no-cache busybox-suid
+RUN apt-get update && apt-get install -y busybox-static && rm -rf /var/lib/apt/lists/*
 
-# Use cached layers from Dockerfile.prod for speed
 FROM base AS deps
-COPY package.json package-lock.json* ./
-RUN npm ci --ignore-scripts
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
 
-FROM deps AS build
+FROM base AS build
 COPY . .
-RUN npm run build --ignore-scripts
 
-# Final, minimal runner stage for the ETL service
 FROM base
-USER node
 WORKDIR /app/
 
-COPY --from=deps --chown=node:node /app/node_modules ./node_modules
-COPY --from=build --chown=node:node /app/dist ./dist
-COPY --from=build --chown=node:node /app/package.json .
-COPY --from=build --chown=node:node /app/tsconfig.json .
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/ .
 
-COPY --from=build --chown=node:node /app/crontab /home/node/crontab
-
-# Switch back to root to set up cron
 USER root
 
-RUN sed -i 's/\r$//' /home/node/crontab && \
-    chown root:root /home/node/crontab && \
-    mv /home/node/crontab /etc/crontabs/root && \
-    chmod 0600 /etc/crontabs/root
+RUN mkdir -p /var/spool/cron/crontabs
 
-# Set the entrypoint to start the cron daemon in the foreground
-CMD ["crond", "-f", "-l", "8"]
+COPY crontab /var/spool/cron/crontabs/root
+RUN chmod 0600 /var/spool/cron/crontabs/root
+
+CMD ["busybox", "crond", "-f", "-L", "/dev/stderr"]

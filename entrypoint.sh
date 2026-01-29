@@ -8,11 +8,9 @@ until PGPASSWORD=$DB_PASSWORD pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USE
 done
 echo "PostgreSQL is ready."
 
-echo "Applying PostgreSQL migrations..."
-npm run db:migrate
+echo "Applying migrations..."
+bun run db:migrate
+bun run analytics:migrate
 
-echo "Applying ClickHouse migrations..."
-npm run analytics:migrate:prod
-
-echo "Starting the application..."
+echo "Starting process..."
 exec "$@"
