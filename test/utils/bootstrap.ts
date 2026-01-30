@@ -84,21 +84,15 @@ export class TestBootstrap {
     const clickhouse = AppContainer.getInstance().get(ClickHouseService);
     const client = clickhouse.getClient();
     const migrationsDir = path.join(process.cwd(), 'migrations-ch');
-    
     const files = await fs.readdir(migrationsDir);
     
     const sqlFiles = files
       .filter(f => f.endsWith('.sql'))
-      .sort((a, b) => {
-        const numA = parseInt(a.split('_')[0]);
-        const numB = parseInt(b.split('_')[0]);
-        return numA - numB;
-      });
+      .sort((a, b) => parseInt(a.split('_')[0]) - parseInt(b.split('_')[0]));
 
     for (const fileName of sqlFiles) {
       const sql = await fs.readFile(path.join(migrationsDir, fileName), 'utf-8');
       const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
-      
       for (const statement of statements) {
         await client.command({ query: statement });
       }
@@ -123,6 +117,14 @@ export class TestBootstrap {
   public async cleanupPostgres(): Promise<void> {
     const db = AppContainer.getInstance().get(DatabaseService).getDb();
     const tables = ['guild_command_permissions', 'guild_feature_overrides', 'guild_settings'];
+    for (const table of tables) {
+      await db.execute(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
+    }
+  }
+
+  public async cleanupAnalytics(): Promise<void> {
+    const db = AppContainer.getInstance().get(DatabaseService).getDb();
+    const tables = ['message_events', 'member_lifecycle_events', 'voice_sessions'];
     for (const table of tables) {
       await db.execute(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
     }
