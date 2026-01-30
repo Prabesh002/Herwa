@@ -31,9 +31,9 @@ async function main(): Promise<void> {
     await clickhouseService.connect();
     logger.info('ClickHouse connection established');
 
-    const messageSyncTask = new MessageSyncTask(databaseService, clickhouseService);
-    const memberSyncTask = new MemberLifecycleSyncTask(databaseService, clickhouseService);
-    const voiceSyncTask = new VoiceSessionSyncTask(databaseService, clickhouseService);
+    const messageSyncTask = new MessageSyncTask(databaseService, clickhouseService, configService);
+    const memberSyncTask = new MemberLifecycleSyncTask(databaseService, clickhouseService, configService);
+    const voiceSyncTask = new VoiceSessionSyncTask(databaseService, clickhouseService, configService);
     const cleanup = new PostgresCleanupTask(databaseService, configService);
 
     logger.info('Running message events sync task...');

@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS message_events
     `message_kind` Enum('text' = 1, 'attachment' = 2, 'sticker' = 3, 'embed' = 4),
     `is_bot` UInt8
 )
-ENGINE = MergeTree()
+ENGINE = ReplacingMergeTree()
 PARTITION BY toYYYYMM(created_at)
-ORDER BY (guild_id, user_id, created_at);
+ORDER BY (guild_id, id);
 
 CREATE TABLE IF NOT EXISTS member_lifecycle_events
 (
@@ -28,9 +28,9 @@ CREATE TABLE IF NOT EXISTS member_lifecycle_events
     `event_type` Enum('JOIN' = 1, 'LEAVE' = 2),
     `created_at` DateTime64(3)
 )
-ENGINE = MergeTree()
+ENGINE = ReplacingMergeTree()
 PARTITION BY toYYYYMM(created_at)
-ORDER BY (guild_id, event_type, created_at);
+ORDER BY (guild_id, id);
 
 CREATE TABLE IF NOT EXISTS voice_sessions
 (
@@ -42,6 +42,6 @@ CREATE TABLE IF NOT EXISTS voice_sessions
     `left_at` DateTime64(3),
     `duration_seconds` UInt32
 )
-ENGINE = MergeTree()
+ENGINE = ReplacingMergeTree()
 PARTITION BY toYYYYMM(joined_at)
-ORDER BY (guild_id, user_id, joined_at);
+ORDER BY (guild_id, id);

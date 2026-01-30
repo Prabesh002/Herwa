@@ -6,4 +6,5 @@ export interface AppConfig {
   databaseUrl: string;
   clickhouseUrl: string;
   postgresRetentionHours: number;
+  analyticsBatchSize: number;
 }

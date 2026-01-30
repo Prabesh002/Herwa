@@ -33,6 +33,9 @@ export class ConfigService {
     const rawRetention = process.env.DB_CLEANUP_RETENTION_HOURS;
     const postgresRetentionHours = rawRetention !== undefined ? Number(rawRetention) : 24;
 
+    const rawBatchSize = process.env.ANALYTICS_BATCH_SIZE;
+    const analyticsBatchSize = rawBatchSize !== undefined ? Number(rawBatchSize) : 5000;
+
     this.config = {
       discordToken,
       discordClientId,
@@ -41,6 +44,7 @@ export class ConfigService {
       databaseUrl,
       clickhouseUrl,
       postgresRetentionHours,
+      analyticsBatchSize
     };
   }
 

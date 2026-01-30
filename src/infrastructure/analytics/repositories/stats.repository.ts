@@ -2,8 +2,8 @@ import { AppContainer } from '@/core/app-container';
 import { ClickHouseService } from '@/infrastructure/analytics/core/clickhouse.service';
 import { ServerStatsData, DailyActivityData } from '@/discord/providers/models/stats.provider.contract';
 
-type CountResult = { 'COUNT()': string };
-type SumResult = { 'sum(duration_seconds)': string | null };
+type CountResult = { 'total': string };
+type SumResult = { 'sum_val': string | null };
 type DailyResult = { day: string; total: string };
 
 export class StatsRepository {
@@ -28,27 +28,27 @@ export class StatsRepository {
       voiceSecondsResult,
     ] = await Promise.all([
       this.executeQuery<CountResult>(
-        'SELECT COUNT() FROM message_events WHERE guild_id = {guildId:String}',
+        'SELECT count() as total FROM message_events FINAL WHERE guild_id = {guildId:String}',
         { guildId }
       ),
       this.executeQuery<CountResult>(
-        "SELECT COUNT() FROM member_lifecycle_events WHERE guild_id = {guildId:String} AND event_type = 'JOIN'",
+        "SELECT count() as total FROM member_lifecycle_events FINAL WHERE guild_id = {guildId:String} AND event_type = 'JOIN'",
         { guildId }
       ),
       this.executeQuery<CountResult>(
-        "SELECT COUNT() FROM member_lifecycle_events WHERE guild_id = {guildId:String} AND event_type = 'LEAVE'",
+        "SELECT count() as total FROM member_lifecycle_events FINAL WHERE guild_id = {guildId:String} AND event_type = 'LEAVE'",
         { guildId }
       ),
       this.executeQuery<SumResult>(
-        'SELECT sum(duration_seconds) FROM voice_sessions WHERE guild_id = {guildId:String}',
+        'SELECT sum(duration_seconds) as sum_val FROM voice_sessions FINAL WHERE guild_id = {guildId:String}',
         { guildId }
       ),
     ]);
 
-    const messageCount = Number(messageCountResult[0]?.['COUNT()'] || 0);
-    const joinCount = Number(joinCountResult[0]?.['COUNT()'] || 0);
-    const leaveCount = Number(leaveCountResult[0]?.['COUNT()'] || 0);
-    const totalVoiceSeconds = Number(voiceSecondsResult[0]?.['sum(duration_seconds)'] || 0);
+    const messageCount = Number(messageCountResult[0]?.total || 0);
+    const joinCount = Number(joinCountResult[0]?.total || 0);
+    const leaveCount = Number(leaveCountResult[0]?.total || 0);
+    const totalVoiceSeconds = Number(voiceSecondsResult[0]?.sum_val || 0);
 
     return {
       messageCount,
@@ -62,10 +62,10 @@ export class StatsRepository {
     const query = `
       SELECT 
         toDate(day_alias) as day, 
-        count(id) as total 
+        count() as total 
       FROM (
           SELECT toDate(created_at) as day_alias, id 
-          FROM message_events 
+          FROM message_events FINAL
           WHERE guild_id = {guildId:String} 
             AND created_at >= subtractDays(now(), {days:Int32})
       ) 
