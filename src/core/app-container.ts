@@ -25,6 +25,10 @@ export class AppContainer {
     this.services.set(identifier, instance);
   }
 
+  public has<T>(identifier: ServiceIdentifier<T>): boolean {
+    return this.services.has(identifier);
+  }
+
   public get<T>(identifier: ServiceIdentifier<T>): T {
     const instance = this.services.get(identifier) as T;
     if (!instance) {
