@@ -1,0 +1,58 @@
+services:
+  tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: herwa-tester
+    environment:
+      - NODE_ENV=test
+      - DISCORD_TOKEN=mock_token
+      - DISCORD_CLIENT_ID=mock_id
+      - DISCORD_CLIENT_SECRET=mock_secret
+      - DB_HOST=db-test
+      - DB_PORT=5432
+      - DB_USER=herwa_test
+      - DB_PASSWORD=testpass
+      - DB_NAME=test_db
+      - DB_SSL=false
+      - CLICKHOUSE_HOST=analytics-test
+      - CLICKHOUSE_PORT_HTTP=8123
+      - CLICKHOUSE_PORT_NATIVE=9000
+      - CLICKHOUSE_DB=test_db_analytics
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - DB_CLEANUP_RETENTION_HOURS=24
+      - ANALYTICS_BATCH_SIZE=5000
+      # Suppress application logs unless it's an error
+      - LOG_LEVEL=error
+    depends_on:
+      - db-test
+      - analytics-test
+    entrypoint: ["bun", "test", "test", "--timeout", "30000"]
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  db-test:
+    image: postgres:16-alpine
+    container_name: herwa-db-test
+    environment:
+      POSTGRES_USER: herwa_test
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: test_db
+    tmpfs: /var/lib/postgresql/data
+    command: ["postgres", "-c", "log_min_messages=ERROR", "-c", "client_min_messages=ERROR"]
+
+  analytics-test:
+    image: clickhouse/clickhouse-server:24.5-alpine
+    container_name: herwa-analytics-test
+    environment:
+      - CLICKHOUSE_DB=test_db_analytics
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+      - CLICKHOUSE_OPTS=--logger.level=error
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 262144
+        hard: 262144
+    tmpfs: /var/lib/clickhouse
