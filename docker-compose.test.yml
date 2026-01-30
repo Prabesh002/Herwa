@@ -21,13 +21,15 @@ services:
       - CLICKHOUSE_DB=test_db_analytics
       - CLICKHOUSE_USER=default
       - CLICKHOUSE_PASSWORD=
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
       - DB_CLEANUP_RETENTION_HOURS=24
       - ANALYTICS_BATCH_SIZE=5000
-      # Suppress application logs unless it's an error
       - LOG_LEVEL=error
     depends_on:
       - db-test
       - analytics-test
+      - redis-test
     entrypoint: ["bun", "test", "test", "--timeout", "30000"]
     volumes:
       - .:/app
@@ -56,3 +58,8 @@ services:
         soft: 262144
         hard: 262144
     tmpfs: /var/lib/clickhouse
+  
+  redis-test:
+    image: redis:7-alpine
+    container_name: herwa-redis-test
+    tmpfs: /data
