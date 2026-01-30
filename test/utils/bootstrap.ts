@@ -116,7 +116,13 @@ export class TestBootstrap {
 
   public async cleanupPostgres(): Promise<void> {
     const db = AppContainer.getInstance().get(DatabaseService).getDb();
-    const tables = ['guild_command_permissions', 'guild_feature_overrides', 'guild_settings'];
+    const tables = [
+      'payments',
+      'guild_subscriptions',
+      'guild_command_permissions',
+      'guild_feature_overrides',
+      'guild_settings'
+    ];
     for (const table of tables) {
       await db.execute(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
     }
