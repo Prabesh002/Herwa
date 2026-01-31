@@ -1,4 +1,3 @@
-// src/core/services/entitlement.service.ts
 import { AppContainer } from '@/core/app-container';
 import { RedisService } from '@/infrastructure/redis/redis.service';
 import { DatabaseService } from '@/infrastructure/database/core/database.service';
@@ -9,7 +8,7 @@ import { SystemFeatureRepository } from '@/infrastructure/database/repositories/
 import { GuildSettingsPersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-settings.persistence.service';
 import { GuildFeatureOverridePersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-feature-override.persistence.service';
 import { GuildCommandPermissionPersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-command-permission.persistence.service';
-import { CachedCommand, CachedFeatureQuota, CachedGuildEntitlements } from '@/core/dtos/cache.dtos';
+import { CachedCommand, CachedGuildEntitlements, CachedFeatureQuota } from '@/core/dtos/cache.dtos';
 import { ChangeGuildTierDto, SetCommandPermissionDto, ToggleGuildFeatureDto } from '@/core/dtos/manager.dtos';
 
 const GLOBAL_COMMANDS_KEY = 'cache:global:commands';
@@ -59,11 +58,12 @@ export class EntitlementService {
   public async getGuildEntitlements(guildId: string): Promise<CachedGuildEntitlements | null> {
     const key = GUILD_ENTITLEMENT_KEY(guildId);
     const cached = await this.redis.get(key);
+    
     if (cached) {
       const parsed = JSON.parse(cached);
       return {
         ...parsed,
-        tierFeatures: new Set(parsed.tierFeatures),
+        tierFeatures: new Map<string, CachedFeatureQuota>(parsed.tierFeatures),
         disabledFeatures: new Set(parsed.disabledFeatures),
         commandPermissions: new Map(parsed.commandPermissions),
       };
@@ -142,16 +142,24 @@ export class EntitlementService {
 
       const settings = await this.guildSettingsRepo.getByGuildId(tx, dto.guildId);
       if (!settings) {
-        throw new Error(`Guild '${dto.guildId}' not initialized.`);
+         await this.guildSettingsService.create(tx, {
+           guildId: dto.guildId,
+           tierId: tier.id
+         });
+      } else {
+         await this.guildSettingsService.updateTier(tx, dto.guildId, tier.id);
       }
-      
-      await this.guildSettingsService.updateTier(tx, dto.guildId, tier.id);
     });
     await this.invalidateGuildCache(dto.guildId);
   }
 
   public async toggleFeature(dto: ToggleGuildFeatureDto): Promise<void> {
     await this.db.getDb().transaction(async (tx) => {
+      const settings = await this.guildSettingsRepo.getByGuildId(tx, dto.guildId);
+      if (!settings) {
+        throw new Error(`Guild '${dto.guildId}' not initialized. Cannot toggle feature.`);
+      }
+
       const feature = await this.featureRepo.getByCode(tx, dto.featureCode);
       if (!feature) throw new Error(`Feature '${dto.featureCode}' not found.`);
 
@@ -166,6 +174,19 @@ export class EntitlementService {
 
   public async setCommandPermissions(dto: SetCommandPermissionDto): Promise<void> {
     await this.db.getDb().transaction(async (tx) => {
+      const settings = await this.guildSettingsRepo.getByGuildId(tx, dto.guildId);
+      if (!settings) {
+         const defaultTier = await this.tierRepo.getDefaultTier(tx);
+         if (defaultTier) {
+            await this.guildSettingsService.create(tx, {
+              guildId: dto.guildId,
+              tierId: defaultTier.id
+            });
+         } else {
+             throw new Error(`Guild '${dto.guildId}' not initialized and no default tier found.`);
+         }
+      }
+
       const command = await this.commandRepo.getByName(tx, dto.commandName);
       if (!command) {
         throw new Error(`Cannot set permissions: Command '${dto.commandName}' does not exist.`);

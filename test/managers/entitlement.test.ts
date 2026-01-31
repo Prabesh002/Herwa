@@ -4,11 +4,12 @@ import { EntitlementManager } from '@/core/managers/entitlement.manager';
 import { DatabaseService } from '@/infrastructure/database/core/database.service';
 import { TestBootstrap } from '@/test/utils/bootstrap';
 import { EntitlementDenialReason } from '@/core/dtos/results.dtos';
-import { guildSettings } from '@/infrastructure/database/schema';
+import { RedisService } from '@/infrastructure/redis/redis.service';
 
 describe('Entitlement Manager Logic', () => {
   let entitlementManager: EntitlementManager;
   let dbService: DatabaseService;
+  let redis: RedisService;
   const guildId = 'test-guild-entitlement';
   const defaultCheck = {
     guildId,
@@ -22,10 +23,12 @@ describe('Entitlement Manager Logic', () => {
     const container = AppContainer.getInstance();
     entitlementManager = container.get(EntitlementManager);
     dbService = container.get(DatabaseService);
+    redis = container.get(RedisService);
   });
 
   beforeEach(async () => {
     await TestBootstrap.getInstance().cleanupPostgres();
+    await TestBootstrap.getInstance().cleanupRedis();
     await entitlementManager.initializeGuild(guildId);
   });
 

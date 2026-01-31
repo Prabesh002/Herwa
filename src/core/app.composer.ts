@@ -1,3 +1,4 @@
+// src/core/app.composer.ts
 import { AppContainer } from '@/core/app-container';
 import { loadDiscordModule } from '@/discord/discord.module';
 import { loadDatabaseModule } from '@/infrastructure/database/database.module';
@@ -10,7 +11,9 @@ export function composeApplication(container: AppContainer): void {
   loadDatabaseModule(container);
   loadAnalyticsModule(container);
   loadRedisModule(container);
-  loadManagerModule(container);
+  
   loadServicesModule(container);
+  
+  loadManagerModule(container);
   loadDiscordModule(container);
 }
