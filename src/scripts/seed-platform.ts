@@ -1,6 +1,8 @@
 import { AppContainer } from '@/core/app-container';
 import { loadDatabaseModule } from '@/infrastructure/database/database.module';
 import { loadAnalyticsModule } from '@/infrastructure/analytics/analytics.module';
+import { loadRedisModule } from '@/infrastructure/redis/redis.module';
+import { loadServicesModule } from '@/core/services/service.module';
 import { loadManagerModule } from '@/core/managers/manager.module';
 import { CatalogManager } from '@/core/managers/catalog.manager';
 import { CommandRegistryService } from '@/discord/commands/command-registry.service';
@@ -14,6 +16,8 @@ import {
   COMMAND_FEATURE_MAP 
 } from '@/core/constants/catalog-defaults';
 import { createLogger } from '@/infrastructure/logging/logger';
+import { RedisService } from '@/infrastructure/redis/redis.service';
+import { EntitlementService } from '@/core/services/entitlement.service';
 
 async function main() {
   const container = AppContainer.getInstance();
@@ -22,8 +26,21 @@ async function main() {
   const logger = createLogger(configService.get().logLevel).child({ service: 'Seeder' });
 
   container.register(ConfigService, configService);
+
+
   loadDatabaseModule(container);
   loadAnalyticsModule(container); 
+  loadRedisModule(container);
+
+  const redisService = container.get(RedisService);
+  try { 
+    await redisService.connect(); 
+    logger.info('Connected to Redis.');
+  } catch (e) { 
+    logger.warn('Redis connection skipped/failed during seed.'); 
+  }
+  loadServicesModule(container);
+
   loadManagerModule(container);
 
   container.register(StatsProvider, new StatsProvider());
@@ -37,7 +54,7 @@ async function main() {
 
   logger.info('Starting platform seeding...');
 
-   const catalogManager = container.get(CatalogManager);
+  const catalogManager = container.get(CatalogManager);
 
   try {
     for (const tier of DEFAULT_TIERS) {
@@ -49,8 +66,6 @@ async function main() {
       }
     }
     
-   
-
     for (const feat of DEFAULT_FEATURES) {
       try {
         await catalogManager.createFeature({
@@ -69,7 +84,6 @@ async function main() {
             featureCode: feat.code,
             tierName: tierName,
           });
-          logger.info(`Linked feature ${feat.code} to tier ${tierName}`);
         } catch (e: any) {
           logger.debug(`Link ${feat.code} <-> ${tierName} skip: ${e.message}`);
         }
@@ -79,7 +93,6 @@ async function main() {
     for (const cmd of commands) {
       const commandName = cmd.data.name;
       const featureCode = COMMAND_FEATURE_MAP[commandName] || 'core';
-      
       const description = (cmd.data as any).description || 'No description provided.';
       
       await catalogManager.registerCommand({
@@ -90,7 +103,14 @@ async function main() {
       logger.info(`Command registered: /${commandName} -> [${featureCode}]`);
     }
 
+    logger.info('Refreshing Global Command Cache...');
+    const entitlementService = container.get(EntitlementService);
+    await entitlementService.warmupGlobalCommands();
+    logger.info('Cache refreshed.');
+
     logger.info('Platform seeding completed successfully.');
+    
+    await redisService.disconnect();
     process.exit(0);
   } catch (error) {
     logger.error({ error }, 'Seeding failed');

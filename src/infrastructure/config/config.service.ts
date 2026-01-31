@@ -30,6 +30,10 @@ export class ConfigService {
     }
     const clickhouseUrl = `http://${chHost}:${chPortHttp}`;
 
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = Number(process.env.REDIS_PORT) || 6379;
+    const redisPassword = process.env.REDIS_PASSWORD;
+
     const rawRetention = process.env.DB_CLEANUP_RETENTION_HOURS;
     const postgresRetentionHours = rawRetention !== undefined ? Number(rawRetention) : 24;
 
@@ -43,6 +47,9 @@ export class ConfigService {
       logLevel,
       databaseUrl,
       clickhouseUrl,
+      redisHost,
+      redisPort,
+      redisPassword,
       postgresRetentionHours,
       analyticsBatchSize
     };

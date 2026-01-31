@@ -12,12 +12,12 @@ export interface SetGuildFeatureOverrideDto {
 }
 
 // Feature Usage
-export interface RecordGuildFeatureUsageDto {
+export interface UpsertGuildFeatureUsageDto {
   guildId: string;
   featureId: string;
   periodStart: Date;
   periodEnd: Date;
-  incrementBy: number;
+  usageCount: number;
 }
 
 // Command Permissions

@@ -5,18 +5,24 @@ import { CommandRegistryService } from '@/discord/commands/command-registry.serv
 import { createLogger, Logger } from '@/infrastructure/logging/logger';
 import { ConfigService } from '@/infrastructure/config/config.service';
 import { EntitlementManager } from '@/core/managers/entitlement.manager';
+import { EntitlementService } from '@/core/services/entitlement.service';
+import { UsageService } from '@/core/services/usage.service';
 
 export class InteractionHandlingService {
   private readonly logger: Logger;
   private readonly clientService: DiscordClientService;
   private readonly commandRegistry: CommandRegistryService;
   private readonly entitlementManager: EntitlementManager;
+  private readonly entitlementService: EntitlementService;
+  private readonly usageService: UsageService;
 
   constructor() {
     const container = AppContainer.getInstance();
     this.clientService = container.get(DiscordClientService);
     this.commandRegistry = container.get(CommandRegistryService);
     this.entitlementManager = container.get(EntitlementManager);
+    this.entitlementService = container.get(EntitlementService);
+    this.usageService = container.get(UsageService);
     
     const config = container.get(ConfigService).get();
     this.logger = createLogger(config.logLevel).child({ service: 'InteractionHandler' });
@@ -25,7 +31,7 @@ export class InteractionHandlingService {
   public start(): void {
     const client = this.clientService.getClient();
     client.on(Events.InteractionCreate, this.handleInteraction.bind(this));
-    this.logger.info('Interaction handler started with Entitlement Guardrails.');
+    this.logger.info('Interaction handler started.');
   }
 
   private async handleInteraction(interaction: Interaction): Promise<void> {
@@ -33,11 +39,7 @@ export class InteractionHandlingService {
 
     const command = this.commandRegistry.get(interaction.commandName);
     if (!command) {
-      this.logger.warn(`No command matching "${interaction.commandName}" was found.`);
-      await interaction.reply({
-        content: 'Unknown command.',
-        flags: [MessageFlags.Ephemeral],
-      });
+      await interaction.reply({ content: 'Unknown command.', flags: [MessageFlags.Ephemeral] });
       return;
     }
 
@@ -54,14 +56,8 @@ export class InteractionHandlingService {
       });
 
       if (!entitlement.isEntitled) {
-        this.logger.info({ 
-          guildId: interaction.guildId, 
-          command: interaction.commandName, 
-          reason: entitlement.reasonCode 
-        }, 'Command execution denied by Entitlement Manager.');
-
         await interaction.reply({
-          content: entitlement.message || 'You do not have permission to use this command.',
+          content: entitlement.message || 'Access denied.',
           flags: [MessageFlags.Ephemeral],
         });
         return;
@@ -70,6 +66,23 @@ export class InteractionHandlingService {
 
     try {
       await command.execute(interaction);
+      
+      if (interaction.guildId) {
+        const globalCommands = await this.entitlementService.getGlobalCommands();
+        const cmdMeta = globalCommands.get(interaction.commandName);
+        const entitlements = await this.entitlementService.getGuildEntitlements(interaction.guildId);
+        
+        if (cmdMeta && entitlements) {
+          const quota = entitlements.tierFeatures.get(cmdMeta.featureCode);
+          if (quota && quota.resetPeriod) {
+            await this.usageService.incrementUsage(
+              interaction.guildId, 
+              cmdMeta.featureId, 
+              quota.resetPeriod
+            );
+          }
+        }
+      }
     } catch (error) {
       this.logger.error({ err: error, command: interaction.commandName }, 'Error executing command');
       if (interaction.replied || interaction.deferred) {

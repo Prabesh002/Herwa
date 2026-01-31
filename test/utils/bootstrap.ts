@@ -2,10 +2,13 @@ import { AppContainer } from '@/core/app-container';
 import { ConfigService } from '@/infrastructure/config/config.service';
 import { ClickHouseService } from '@/infrastructure/analytics/core/clickhouse.service';
 import { DatabaseService } from '@/infrastructure/database/core/database.service';
+import { RedisService } from '@/infrastructure/redis/redis.service';
 import { CatalogManager } from '@/core/managers/catalog.manager';
 import { loadDatabaseModule } from '@/infrastructure/database/database.module';
 import { loadAnalyticsModule } from '@/infrastructure/analytics/analytics.module';
 import { loadManagerModule } from '@/core/managers/manager.module';
+import { loadRedisModule } from '@/infrastructure/redis/redis.module';
+import { loadServicesModule } from '@/core/services/service.module';
 
 import fs from 'fs/promises';
 import path from 'path';
@@ -50,6 +53,13 @@ export class TestBootstrap {
         loadAnalyticsModule(container);
         await container.get(ClickHouseService).connect();
       }
+
+      if (!container.has(RedisService)) {
+        loadRedisModule(container);
+        await container.get(RedisService).connect();
+      }
+
+      loadServicesModule(container);
 
       if (!container.has(CatalogManager)) {
         loadManagerModule(container);
@@ -121,11 +131,17 @@ export class TestBootstrap {
       'guild_subscriptions',
       'guild_command_permissions',
       'guild_feature_overrides',
-      'guild_settings'
+      'guild_settings',
+      'guild_feature_usage'
     ];
     for (const table of tables) {
       await db.execute(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`);
     }
+  }
+
+  public async cleanupRedis(): Promise<void> {
+    const redis = AppContainer.getInstance().get(RedisService).getClient();
+    await redis.flushdb();
   }
 
   public async cleanupAnalytics(): Promise<void> {

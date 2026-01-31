@@ -11,6 +11,7 @@ services:
     depends_on:
       - db
       - analytics_db
+      - redis
 
   db:
     image: postgres:16-alpine
@@ -41,6 +42,14 @@ services:
         soft: 262144
         hard: 262144
 
+  redis:
+    image: redis:7-alpine
+    container_name: herwa-redis-prod
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - herwa-redis-data-prod:/data
+
   etl:
     build:
       context: .
@@ -53,7 +62,9 @@ services:
     depends_on:
       - db
       - analytics_db
+      - redis
 
 volumes:
   herwa-data-prod:
   herwa-analytics-data-prod:
+  herwa-redis-data-prod:

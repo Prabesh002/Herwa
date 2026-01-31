@@ -14,6 +14,7 @@ services:
     depends_on:
       - db
       - analytics_db
+      - redis
 
   db:
     image: postgres:16-alpine
@@ -49,6 +50,15 @@ services:
         soft: 262144
         hard: 262144
 
+  redis:
+    image: redis:7-alpine
+    container_name: herwa-redis-dev
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - herwa-redis-data-dev:/data
+
   etl:
     build:
       context: .
@@ -59,9 +69,11 @@ services:
     depends_on:
       - db
       - analytics_db
+      - redis
     volumes:
       - ./crontab.dev:/var/spool/cron/crontabs/root
 
 volumes:
   herwa-data-dev:
   herwa-analytics-data-dev:
+  herwa-redis-data-dev:

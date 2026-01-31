@@ -5,6 +5,9 @@ export interface AppConfig {
   logLevel: string;
   databaseUrl: string;
   clickhouseUrl: string;
+  redisHost: string;
+  redisPort: number;
+  redisPassword?: string;
   postgresRetentionHours: number;
   analyticsBatchSize: number;
 }
