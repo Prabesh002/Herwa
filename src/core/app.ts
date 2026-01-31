@@ -10,6 +10,7 @@ import { EventHandlingService } from '@/discord/core/event-handling.service';
 import { composeApplication } from '@/core/app.composer';
 import { ClickHouseService } from '@/infrastructure/analytics/core/clickhouse.service';
 import { RedisService } from '@/infrastructure/redis/redis.service';
+import { EntitlementService } from './services/entitlement.service';
 
 export class App {
   private readonly container: AppContainer;
@@ -34,6 +35,10 @@ export class App {
 
     const redisService = this.container.get(RedisService);
     await redisService.connect();
+
+    const entitlementService = this.container.get(EntitlementService);
+    await entitlementService.warmupGlobalCommands();
+    this.logger.info('Global command cache has been warmed up.');
 
     const interactionHandler = this.container.get(InteractionHandlingService);
     interactionHandler.start();
