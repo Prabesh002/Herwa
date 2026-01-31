@@ -25,6 +25,7 @@
     "chart.js": "^4.5.1",
     "chartjs-node-canvas": "^5.0.0",
     "chartjs-plugin-datalabels": "^2.2.0",
+    "date-fns": "^4.1.0",
     "discord.js": "^14.15.3",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",

@@ -1,5 +1,6 @@
 import { AppContainer } from '@/core/app-container';
 import { EntitlementService } from '@/core/services/entitlement.service';
+import { UsageService } from '@/core/services/usage.service';
 import { DatabaseService } from '@/infrastructure/database/core/database.service';
 import { SubscriptionTierRepository } from '@/infrastructure/database/repositories/platform/catalog/subscription-tier.repository';
 import { GuildSettingsPersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-settings.persistence.service';
@@ -9,7 +10,7 @@ import { EntitlementResult, EntitlementDenialReason } from '@/core/dtos/results.
 export class EntitlementManager {
   private db = AppContainer.getInstance().get(DatabaseService);
   private entitlementService = AppContainer.getInstance().get(EntitlementService);
-
+  private usageService = AppContainer.getInstance().get(UsageService);
   private tierRepo = AppContainer.getInstance().get(SubscriptionTierRepository);
   private guildSettingsService = AppContainer.getInstance().get(GuildSettingsPersistenceService);
 
@@ -39,43 +40,52 @@ export class EntitlementManager {
       return { isEntitled: false, reasonCode: EntitlementDenialReason.COMMAND_NOT_FOUND, message: 'This command does not exist.' };
     }
     if (!command.isGlobalEnabled) {
-      return { isEntitled: false, reasonCode: EntitlementDenialReason.FEATURE_DISABLED_GLOBALLY, message: 'This feature is temporarily disabled by the developers.' };
+      return { isEntitled: false, reasonCode: EntitlementDenialReason.FEATURE_DISABLED_GLOBALLY, message: 'This feature is temporarily disabled.' };
     }
     if (command.isMaintenance) {
-      return { isEntitled: false, reasonCode: EntitlementDenialReason.COMMAND_IN_MAINTENANCE, message: 'This command is currently under maintenance.' };
+      return { isEntitled: false, reasonCode: EntitlementDenialReason.COMMAND_IN_MAINTENANCE, message: 'This command is under maintenance.' };
     }
     
-    let guildEntitlements = await this.entitlementService.getGuildEntitlements(guildId);
-    if (!guildEntitlements) {
+    let entitlements = await this.entitlementService.getGuildEntitlements(guildId);
+    if (!entitlements) {
       await this.initializeGuild(guildId);
-      guildEntitlements = await this.entitlementService.getGuildEntitlements(guildId);
-      if (!guildEntitlements) {
-        return { isEntitled: false, reasonCode: EntitlementDenialReason.GUILD_NOT_INITIALIZED, message: 'Could not initialize settings for this server. Please try again.' };
+      entitlements = await this.entitlementService.getGuildEntitlements(guildId);
+      if (!entitlements) return { isEntitled: false, reasonCode: EntitlementDenialReason.GUILD_NOT_INITIALIZED };
+    }
+    
+    if (entitlements.subscriptionExpiresAt && new Date(entitlements.subscriptionExpiresAt) < new Date()) {
+      return { isEntitled: false, reasonCode: EntitlementDenialReason.SUBSCRIPTION_EXPIRED, message: 'Premium subscription expired.' };
+    }
+
+    const quota = entitlements.tierFeatures.get(command.featureCode);
+    if (!quota) {
+      return { isEntitled: false, reasonCode: EntitlementDenialReason.TIER_MISSING_FEATURE, message: `Feature not available on ${entitlements.tierName} tier.` };
+    }
+    if (quota.limit !== null && quota.resetPeriod !== null) {
+      const currentUsage = await this.usageService.getUsage(guildId, command.featureId, quota.resetPeriod);
+      if (currentUsage >= quota.limit) {
+        return { 
+          isEntitled: false, 
+          reasonCode: EntitlementDenialReason.SUBSCRIPTION_EXPIRED,
+          message: `You have reached the ${quota.resetPeriod.toLowerCase()} usage limit for ${command.featureCode}.` 
+        };
       }
     }
-    
-    if (guildEntitlements.subscriptionExpiresAt && new Date(guildEntitlements.subscriptionExpiresAt) < new Date()) {
-      return { isEntitled: false, reasonCode: EntitlementDenialReason.SUBSCRIPTION_EXPIRED, message: 'Your premium subscription for this bot has expired.' };
+
+    if (entitlements.disabledFeatures.has(command.featureId)) {
+      return { isEntitled: false, reasonCode: EntitlementDenialReason.FEATURE_DISABLED_BY_ADMIN, message: 'Feature disabled in this server.' };
     }
 
-    if (!guildEntitlements.tierFeatures.has(command.featureCode)) {
-      return { isEntitled: false, reasonCode: EntitlementDenialReason.TIER_MISSING_FEATURE,  message: `This feature is not available on your current tier (${guildEntitlements.tierName}).`  };
-    }
-
-    if (guildEntitlements.disabledFeatures.has(command.featureId)) {
-      return { isEntitled: false, reasonCode: EntitlementDenialReason.FEATURE_DISABLED_BY_ADMIN, message: 'This feature is disabled in this server.' };
-    }
-
-    const permissions = guildEntitlements.commandPermissions.get(commandName);
+    const permissions = entitlements.commandPermissions.get(commandName);
     if (permissions) {
       if (permissions.denyRoleIds?.some(roleId => memberRoles.includes(roleId))) {
-        return { isEntitled: false, reasonCode: EntitlementDenialReason.ROLE_DENIED, message: 'You are explicitly denied from using this command.' };
+        return { isEntitled: false, reasonCode: EntitlementDenialReason.ROLE_DENIED, message: 'Access denied for your role.' };
       }
-      if (permissions.allowedChannelIds && permissions.allowedChannelIds.length > 0 && !permissions.allowedChannelIds.includes(channelId)) {
-        return { isEntitled: false, reasonCode: EntitlementDenialReason.INVALID_CHANNEL, message: 'This command cannot be used in this channel.' };
+      if (permissions.allowedChannelIds?.length && !permissions.allowedChannelIds.includes(channelId)) {
+        return { isEntitled: false, reasonCode: EntitlementDenialReason.INVALID_CHANNEL, message: 'Command not allowed in this channel.' };
       }
-      if (permissions.allowedRoleIds && permissions.allowedRoleIds.length > 0 && !permissions.allowedRoleIds.some(roleId => memberRoles.includes(roleId))) {
-        return { isEntitled: false, reasonCode: EntitlementDenialReason.MISSING_ROLE, message: 'You do not have the required role to use this command.' };
+      if (permissions.allowedRoleIds?.length && !permissions.allowedRoleIds.some(roleId => memberRoles.includes(roleId))) {
+        return { isEntitled: false, reasonCode: EntitlementDenialReason.MISSING_ROLE, message: 'Missing required role.' };
       }
     }
 

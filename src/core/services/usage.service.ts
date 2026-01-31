@@ -4,11 +4,10 @@ import { resetPeriodEnum } from '@/infrastructure/database/schema/platform/enums
 
 type ResetPeriod = typeof resetPeriodEnum.enumValues[number];
 
-export class UsageManager {
+export class UsageService {
   private redisService = AppContainer.getInstance().get(RedisService);
   
-  // 35 Days buffer for monthly, 48 hours for daily.
-  // This ensures keys survive if ETL is down for a while.
+  // 35 Days buffer, keys survive if ETL is down for a while.
   private readonly TTL_BUFFER_SECONDS = 3024000; 
 
   private getPeriodStart(date: Date, period: ResetPeriod): string {
@@ -21,7 +20,8 @@ export class UsageManager {
       d.setUTCMonth(0, 1);
     }
     
-    return d.toISOString();
+    // Return date part only: YYYY-MM-DD
+    return d.toISOString().split('T')[0];
   }
 
   private getKey(guildId: string, featureId: string, periodStart: string): string {
@@ -38,15 +38,8 @@ export class UsageManager {
     const periodStart = this.getPeriodStart(now, period);
     const key = this.getKey(guildId, featureId, periodStart);
 
-    // If amount > 1, we use incrby, but for typical use case simple incr
-    let result: number;
-    if (amount === 1) {
-      result = await this.redisService.incr(key);
-    } else {
-      result = await this.redisService.getClient().incrby(key, amount);
-    }
+    const result = await this.redisService.getClient().incrby(key, amount);
     
-    // Set TTL on first write
     if (result === amount) {
       await this.redisService.expire(key, this.TTL_BUFFER_SECONDS);
     }

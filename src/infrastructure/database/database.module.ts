@@ -22,6 +22,7 @@ import { GuildCommandPermissionRepository } from './repositories/platform/entitl
 import { GuildSettingsPersistenceService } from './services/platform/entitlement/guild-settings.persistence.service';
 import { GuildFeatureOverridePersistenceService } from './services/platform/entitlement/guild-feature-override.persistence.service';
 import { GuildCommandPermissionPersistenceService } from './services/platform/entitlement/guild-command-permission.persistence.service';
+import { GuildFeatureUsagePersistenceService } from './services/platform/entitlement/guild-feature-usage.persistence.service';
 
 import { GuildSubscriptionRepository } from './repositories/platform/history/guild-subscription.repository';
 import { PaymentRepository } from './repositories/platform/history/payment.repository';
@@ -52,6 +53,7 @@ export function loadDatabaseModule(container: AppContainer): void {
   container.register(GuildSettingsPersistenceService, new GuildSettingsPersistenceService());
   container.register(GuildFeatureOverridePersistenceService, new GuildFeatureOverridePersistenceService());
   container.register(GuildCommandPermissionPersistenceService, new GuildCommandPermissionPersistenceService());
+  container.register(GuildFeatureUsagePersistenceService, new GuildFeatureUsagePersistenceService());
 
   container.register(GuildSubscriptionRepository, new GuildSubscriptionRepository());
   container.register(PaymentRepository, new PaymentRepository());

@@ -9,7 +9,7 @@ import { SystemFeatureRepository } from '@/infrastructure/database/repositories/
 import { GuildSettingsPersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-settings.persistence.service';
 import { GuildFeatureOverridePersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-feature-override.persistence.service';
 import { GuildCommandPermissionPersistenceService } from '@/infrastructure/database/services/platform/entitlement/guild-command-permission.persistence.service';
-import { CachedCommand, CachedGuildEntitlements } from '@/core/dtos/cache.dtos';
+import { CachedCommand, CachedFeatureQuota, CachedGuildEntitlements } from '@/core/dtos/cache.dtos';
 import { ChangeGuildTierDto, SetCommandPermissionDto, ToggleGuildFeatureDto } from '@/core/dtos/manager.dtos';
 
 const GLOBAL_COMMANDS_KEY = 'cache:global:commands';
@@ -89,7 +89,14 @@ export class EntitlementService {
       where: (tf, { eq }) => eq(tf.tierId, settings.tierId),
       with: { feature: true },
     });
-    const tierFeatures = new Set(tierFeaturesResult.map(tf => tf.feature.code));
+
+    const tierFeatures = new Map<string, CachedFeatureQuota>();
+    for (const tf of tierFeaturesResult) {
+      tierFeatures.set(tf.feature.code, {
+        limit: tf.usageLimit,
+        resetPeriod: tf.resetPeriod,
+      });
+    }
 
     const disabledFeatures = new Set(
       settings.overrides.filter(o => !o.isEnabled).map(o => o.featureId)
